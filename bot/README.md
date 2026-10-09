@@ -130,3 +130,25 @@ https://host/?bot=https://host&id=<chat_id>
 (поисковая ссылка). Опционально: задай `POGREBOK_GENIUS_TOKEN` (client access
 token, бесплатно) — сервер сможет обогащать каталог метаданными Genius
 (альбом, обложка альбома, фото артиста) для треков, добавленных в базу.
+
+## ВАРИАНТ БЕЗ ДОМАШНЕГО СЕРВЕРА: Cloudflare Workers (вебхуки)
+
+Если домашняя сеть не пускает к api.telegram.org (winerror 10060 / таймауты),
+бот живёт в облаке CF: телеграм сам стучит на вебхук, профили лежат в KV,
+сайт ходит в то же API. Бесплатно, 24/7, вне твоей сети.
+
+1. dash.cloudflare.com → регистрация → **Workers & Pages → Create → Hello World worker**,
+   имя `pogrebok` → Deploy.
+2. Worker → **Edit code** → удалить всё → вставить содержимое `worker.js` → **Save and Deploy**.
+3. Worker → Settings → **Variables and Secrets**:
+   secret `TG_TOKEN` = токен BotFather; переменные `BOT_USER=pogrebok_room_bot`,
+   `SITE=https://chmoshnik187.github.io/pogrebok`, опционально `GENIUS`.
+4. Workers & Pages → **KV** → Create namespace `pogreb`; затем Worker → Settings →
+   **Bindings** → Add: variable `POGREB` → namespace `pogreb` → Save.
+5. Скинь автору погреба URL вида `https://pogrebok.<sub>.workers.dev` —
+   он пропишет вебхук (`/tg`) со своей стороны и проверит /api/ping.
+   Домашний bot.py при этом не запускай: вебхук и getUpdates конфликтуют (409).
+
+API воркера совпадает с pogrebok_server.py: /api/ping /api/profile /api/add
+/api/search /api/track /api/comment. Сайт подключается тем же
+`?bot=<worker-url>&id=<chat>`.
