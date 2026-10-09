@@ -101,7 +101,15 @@ table.mx th{color:var(--mut);font-weight:600}
 .pn a{flex:1;border:1px solid var(--line);border-radius:13px;padding:12px 14px;text-decoration:none;font-weight:800;font-size:14px;background:var(--card);transition:.15s}
 .pn a:hover{transform:translateY(-3px)}
 .pn a small{display:block;color:var(--mut);font-weight:500;font-size:11.5px}
-footer{padding:34px 0 70px;text-align:center;color:var(--dim);font-size:12px;font-family:ui-monospace,monospace}
+footer{margin:60px 0 0;padding:30px 0 90px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+.ftgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px}
+.ftgrid h5{margin:0 0 8px;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:2px;color:var(--mut)}
+.ftgrid a.fl2{display:block;color:var(--dim);text-decoration:none;padding:3px 0;font-size:12.5px}
+.ftgrid a.fl2:hover{color:var(--yellow)}
+.ftbrand{font-weight:900;font-size:18px;letter-spacing:-.5px;background:linear-gradient(92deg,var(--pink),var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.donate{background:linear-gradient(135deg,#ff7a00,#ff3d81);border:0;color:#fff;font-weight:900;box-shadow:0 10px 26px rgba(255,80,40,.35)}
+.donate:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(255,80,40,.5)}
+.ftline{margin-top:22px;padding-top:14px;border-top:1px dashed var(--line);font-family:ui-monospace,monospace;font-size:11px;color:var(--dim);text-align:center}
 #pbar{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:min(760px,calc(100vw - 24px));background:rgba(16,9,28,.92);border:1px solid var(--line);border-radius:18px;padding:10px 14px 12px;display:none;z-index:75;backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px rgba(255,61,129,.12)}
 #pbar.on{display:block}
 #pbar .prow{display:flex;gap:12px;align-items:center}
@@ -327,7 +335,7 @@ function hub(){
   <section><h2>АЧИВКИ</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"><div class="box"><h3 style="margin:0 0 8px;font-size:15px">КОЛЛЕКЦИИ</h3><div class="ach">${D.ach.map(([e,t,x])=>`<div class="a got"><span class="em">${e}</span><b>${t}</b><span>${x}</span></div>`).join('')}</div></div>
   <div class="box"><h3 style="margin:0 0 8px;font-size:15px">САЙТА · ${got}/${ACH2.length}</h3><div class="prog"><div class="fl" style="width:${100*got/ACH2.length}%"></div></div>${achBox()}</div></div></section>
   ${opin('7 377 лайк-событий, 5 412 уникальных трека, 2 415 имён. Это не коллекция, это <b>автопортрет в формате плейлиста</b>: погреб, где ты живёшь в 3:56. Сайт — попытка показать тебе этот погреб со стороны, с выключенным светом и включённым неоновым.',COL.hub)}
-  <footer>погребок · собрано по выгрузкам Яндекс Музыки · обложки: iTunes + генератив · меню ☰ слева, эпохи 🎨 справа</footer>`;
+`;
 }
 /* ---------- страница плейлиста ---------- */
 function page(k){
@@ -599,6 +607,42 @@ function postComment(tr,f){
   fetch(CLOUD.base+'/api/comment?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:CLOUD.id,name:(f.cn&&f.cn.value||'').trim(),text:(f.ct&&f.ct.value||'').trim()})}).then(()=>{f.ct.value='';loadComments(tr);});
 }
 if(typeof addEventListener!=='undefined')addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();const d=$('#drawer');if(!d.classList.contains('open'))toggleDrawer();setTimeout(()=>{const q=$('#q');if(q)q.focus();},120);}});
+const VER='3.56';
+const FTINFO={
+privacy:['🕵 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ','Мы не собираем ничего. Твои txt парсятся в твоём браузере, профили и заметки живут в твоём localStorage. На сервер улетает только то, что ты сам отправил боту. Аналитики, трекеров и пикселей нет: автору лень, а тебе приятно.'],
+terms:['📜 УСЛОВИЯ ИСПОЛЬЗОВАНИЯ','Условие одно: не ставить другу «я тебе это включу, ты офигеешь» без предупреждения. Остальное — можно: копировать, переделывать, слушать на кухне в три часа ночи.'],
+cookies:['🍪 COOKIES','Cookie нет совсем. Есть localStorage — это твоя собственная полка в твоём собственном браузере: профили, заметки, обложки, ачивки. Хочешь чистую комнату — меню → «🗑 сбросить».'],
+jobs:['💼 ВАКАНСИИ','Открыта одна позиция: ты. Обязанности: слушать своё. Зарплата: обложки, роаст и письмо себе раз в заход. Собеседование: /add любимый трек.'],
+press:['📰 ПРЕСС-КИТ','Скрин главной и фраза «погреб, где ты живёшь в 3:56». Больше ничего не нужно: остальное сайтом скажется само.'],
+status:['📡 СТАТУС','Смотри строку состояния ниже: облако подключено или локальный режим. Если локальный — комментарии и sync спят, всё остальное работает.'],
+log:['🧾 ЧЕЙНДЖЛОГ','v3.56: плеер v2 с центрованным транспортом · поиск по сайту и общей базе · комменты и альбомы · редактор обложек v2 (шаблоны + авто по сути) · og-превью ссылки · футер, который не стыдно.']
+};
+function footerInfo(k){
+  const [t,x]=FTINFO[k];
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;z-index:130;background:rgba(5,2,10,.94);display:flex;align-items:center;justify-content:center;padding:20px';
+  d.innerHTML=`<div style="max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px">
+  <h3 style="margin:0 0 10px;font-size:18px;color:var(--yellow)">${t}</h3>
+  <p style="margin:0;font-size:14px;color:var(--mut)">${x}</p>
+  <div class="chips" style="margin:14px 0 0"><span class="ybtn" style="--yc:var(--mut);cursor:pointer;margin:0" onclick="this.closest('div[style]').remove()">понятно</span></div></div>`;
+  document.body.appendChild(d);
+}
+function FOOTER(){
+  const links=ROUTES.map(r=>`<a class="fl2" href="#/${r==='hub'?'':r}">${EMO[r]} ${NAME[r]}</a>`).join('');
+  const junk=['privacy','terms','cookies','jobs','press','status','log'].map(k=>`<a class="fl2" style="cursor:pointer" onclick="footerInfo('${k}')">${{privacy:'политика конфиденциальности',terms:'условия использования',cookies:'cookies',jobs:'вакансии',press:'пресс-кит',status:'статус сервера',log:'чейнджлог'}[k]}</a>`).join('');
+  return `<footer><div class="ftgrid">
+  <div><div class="ftbrand">ПОГРЕБОК</div><p style="margin:6px 0 12px;color:var(--dim)">комната слуха · v${VER} · сделано в 3:56<br>собрано по выгрузкам Яндекс Музыки, обложки: iTunes + генератив</p>
+  <a class="ybtn donate" href="https://www.donationalerts.com/r/oskenhood" target="_blank" rel="noopener">💸 поддержать автора</a>
+  <p style="margin:8px 0 0;color:var(--dim);font-size:11.5px">донат = плюс одна обложка и минус один баг в мир</p></div>
+  <div><h5>РАЗДЕЛЫ</h5>${links}</div>
+  <div><h5>СЛУЖЕБНАЯ ХУЙНЯ</h5>${junk}</div>
+  <div><h5>КУДА ПИСАТЬ</h5>
+  <a class="fl2" href="https://t.me/pogrebok_room_bot" target="_blank" rel="noopener">🤖 телеграм-бот</a>
+  <a class="fl2" href="https://github.com/chmoshnik187/pogrebok" target="_blank" rel="noopener">📦 исходники и сайт</a>
+  <a class="fl2" href="https://www.donationalerts.com/r/oskenhood" target="_blank" rel="noopener">💸 донат автору</a>
+  <a class="fl2" style="cursor:pointer" onclick="toggleDrawer()">🗺 карта сайта (меню)</a></div></div>
+  <div class="ftline">© погреб · ни один трек не пострадал · ${CLOUD?'☁️ облако подключено':'🏠 локальный режим: комменты и sync спят'} · жалобы принимаются ботом, сначала /add, потом /del</div></footer>`;
+}
 /* ---------- роутер ---------- */
 function route(){
   const h=location.hash.replace('#/','').split('/');
@@ -624,7 +668,7 @@ function render(){
         else if(r.page==='me')html=meRender();
     else if(!D.keys.length&&r.page!=='me')html=meRender();
     else html=ROUTES.includes(r.page)?page(r.page):hub();
-    app.innerHTML=html;
+    app.innerHTML=html+FOOTER();
     window.scrollTo({top:0,behavior:'instant'});
     app.classList.remove('out');
     if(r.page==='artifacts'){$('#letterbox').innerHTML=letter();vinyl();}
