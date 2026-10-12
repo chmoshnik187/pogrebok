@@ -154,7 +154,7 @@ def delta(a, b):
 def rewrite_md(m):
     lines = ['# ВЕРСИИ ПОГРЕБКА', '',
              'Снимки состояния (reports/ deploy/ bot/ tools/). Откат: '
-             '`python3 tools/rewind` → `python3 tools/ver.py rewind vNNN`.', '',
+             '`python3 tools/ver.py rewind vNNN` (текущее состояние сначала само сохранится).', '',
              '| ver | дата | файлов | Δ от прошлой | сообщение |',
              '|---|---|---|---|---|']
     prev = None
