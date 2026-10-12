@@ -14,6 +14,12 @@
 :root{--bg:#0b0614;--card:#180e29;--line:#33204f;--tx:#f4eefc;--mut:#a08cc4;--dim:#6f5b96;
 --pink:#ff3d81;--cyan:#39f0c8;--yellow:#ffd23f;--violet:#a06bff;--red:#ff5c4d;--blue:#5b8def;--lime:#b8f04a}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
+::selection{background:var(--pink);color:#0b0614}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#12081c}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--pink),var(--violet));border-radius:99px;border:2px solid #12081c}
+body:before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+body{counter-reset:sec}
 body{margin:0;background:radial-gradient(1100px 560px at 88% -12%,rgba(160,107,255,.10),transparent 62%),radial-gradient(900px 520px at -12% 34%,rgba(255,61,129,.07),transparent 60%),radial-gradient(700px 400px at 50% 110%,rgba(57,240,200,.05),transparent 60%),var(--bg);color:var(--tx);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
 .wrap{max-width:1020px;margin:0 auto;padding:0 18px}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
@@ -30,25 +36,26 @@ nav a.chip.on{border-color:currentColor;box-shadow:0 0 12px currentColor}
 .hero>*:nth-child(2){animation-delay:.06s}
 .hero>*:nth-child(3){animation-delay:.12s}
 .kick{display:inline-block;font-size:11px;letter-spacing:3px;border:1px solid currentColor;border-radius:999px;padding:5px 14px;font-family:ui-monospace,monospace}
-h1{font-size:clamp(38px,7.5vw,86px);margin:10px 0 2px;font-weight:900;letter-spacing:-1.5px;line-height:1}
+h1{font-size:clamp(44px,10vw,116px);margin:10px 0 2px;font-weight:900;letter-spacing:-3px;line-height:.95;text-transform:uppercase}
 .hsub{color:var(--mut);font-size:15px;max-width:680px;margin:8px auto 0}
 .heroimg{margin:22px auto 0;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 0 60px rgba(160,107,255,.3)}
 .heroimg img{display:block;width:100%;height:auto}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin:24px 0}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 6px;text-align:center}
-.stat b{display:block;font-size:24px;font-family:ui-monospace,monospace}
+.stat{background:var(--card);border:2px solid rgba(255,255,255,.13);border-radius:8px;padding:12px 6px;text-align:center;box-shadow:4px 4px 0 rgba(0,0,0,.4)}
+.stat b{display:block;font-size:30px;font-family:ui-monospace,monospace;text-shadow:0 0 18px currentColor}
 .stat span{font-size:10.5px;color:var(--mut)}
 section{margin:46px 0;padding-top:26px;border-top:1px solid transparent;border-image:linear-gradient(90deg,var(--line),transparent 70%) 1}
-h2{font-size:clamp(20px,3.6vw,27px);margin:0 0 8px;font-weight:900;letter-spacing:-.6px}
-h2:after{content:'';display:block;width:52px;height:3px;border-radius:99px;margin-top:8px;background:linear-gradient(90deg,var(--pink),var(--violet));opacity:.8}
+h2{font-size:clamp(22px,4.4vw,34px);margin:0 0 10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;counter-increment:sec}
+h2:before{content:counter(sec,decimal-leading-zero)' /';font-family:ui-monospace,monospace;font-size:.6em;color:var(--pink);margin-right:10px;vertical-align:middle}
+h2:after{content:'';display:block;width:74px;height:4px;margin-top:8px;background:linear-gradient(90deg,var(--pink),var(--violet));box-shadow:0 0 14px var(--pink)}
 .lead{color:var(--mut);font-size:14.5px;margin:0 0 14px;max-width:780px}
 .lead b{color:var(--tx)}
-.box{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,0) 40%),var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px}
+.box{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0) 45%),var(--card);border:2px solid rgba(255,255,255,.13);border-radius:8px;padding:16px;box-shadow:6px 6px 0 rgba(255,61,129,.16)}
 .note{font-size:13.5px;color:var(--mut);margin-top:10px}
 .note b{color:var(--yellow)}.note em{color:var(--cyan);font-style:normal}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.pcard{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0) 45%),var(--card);border:1px solid rgba(255,255,255,.07);border-left:4px solid var(--pc);border-radius:15px;padding:14px;text-decoration:none;display:block;transition:.18s}
-.pcard:hover{transform:translateY(-5px) rotate(-.6deg);box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.pcard{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 45%),var(--card);border:2px solid rgba(255,255,255,.13);border-left:6px solid var(--pc);border-radius:8px;padding:14px;text-decoration:none;display:block;transition:.18s;box-shadow:6px 6px 0 rgba(0,0,0,.45)}
+.pcard:hover{transform:translate(-3px,-3px) rotate(-.5deg);box-shadow:10px 10px 0 var(--pc),0 18px 44px rgba(0,0,0,.5)}
 .pcard h3{margin:8px 0 4px;font-size:19px;color:var(--pc)}
 .pcard .tag{font-size:12.5px;color:var(--mut)}
 .pcard .num{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);margin-top:8px}
@@ -58,11 +65,11 @@ h2:after{content:'';display:block;width:52px;height:3px;border-radius:99px;margi
 .mb .tr{height:12px;background:#221537;border-radius:99px;overflow:hidden;margin-top:4px}
 .mb .fl{height:100%;border-radius:99px;box-shadow:0 0 12px currentColor}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.chip2{border:1px solid rgba(255,255,255,.09);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tx);transition:.15s}
+.chip2{border:2px solid rgba(255,255,255,.14);background:var(--card);border-radius:6px;padding:6px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tx);transition:.15s}
 a.chip2:hover{transform:translateY(-2px);border-color:var(--yellow);box-shadow:0 0 12px rgba(255,210,63,.35)}
 .chip2 small{color:var(--mut);font-family:ui-monospace,monospace}
 .wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-family:ui-monospace,monospace;font-size:13px;transform:rotate(var(--r,0deg));transition:.18s;cursor:pointer;text-align:left;color:var(--tx)}
+.q{background:var(--card);border:2px solid rgba(255,255,255,.12);border-radius:8px;padding:12px 14px 12px 62px;font-family:ui-monospace,monospace;font-size:13.5px;transform:rotate(var(--r,0deg));transition:.18s;cursor:pointer;text-align:left;color:var(--tx);box-shadow:4px 4px 0 rgba(0,0,0,.4)}
 .q:hover{transform:rotate(0) scale(1.04);border-color:var(--qc);box-shadow:0 0 18px rgba(255,255,255,.08)}
 .q i{display:block;color:var(--dim);font-style:normal;font-size:11px;margin-top:6px}
 table.mx{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:12px}
@@ -87,7 +94,7 @@ table.mx th{color:var(--mut);font-weight:600}
 .cover img{display:block;width:100%;height:auto;transition:.3s}
 .cover:hover img{transform:scale(1.05)}
 .cover .badge{position:absolute;left:10px;bottom:10px;background:rgba(11,6,20,.8);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:11px;font-family:ui-monospace,monospace}
-.ybtn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;border:1px solid currentColor;color:var(--yc,#ffcc00);border-radius:999px;padding:9px 18px;font-weight:800;font-size:13px;text-decoration:none;background:rgba(255,255,255,.03);transition:.15s}
+.ybtn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;border:2px solid currentColor;color:var(--yc,#ffcc00);border-radius:6px;padding:9px 18px;font-weight:800;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;font-family:ui-monospace,monospace;text-decoration:none;background:rgba(255,255,255,.03);transition:.15s}
 .ybtn:hover{transform:translateY(-2px);box-shadow:0 0 20px currentColor}
 .pcard .cover{margin:8px 0 2px;box-shadow:0 10px 26px rgba(0,0,0,.45)}
 .prog{height:10px;background:#221537;border-radius:99px;overflow:hidden;margin:8px 0 4px}
@@ -204,6 +211,11 @@ body{padding-bottom:104px}
 #yearinfo{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;font-size:13px;color:var(--mut)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin 10s linear infinite;border-radius:50%}
+ .tick{overflow:hidden;border-top:2px solid var(--line);border-bottom:2px solid var(--line);background:rgba(255,255,255,.02);padding:9px 0;margin:18px 0;white-space:nowrap}
+.tick .tk{display:inline-block;animation:tick 44s linear infinite;font-family:ui-monospace,monospace;font-size:13px;color:var(--mut)}
+.tick .tk b{color:var(--pink);font-weight:600}
+.tick .tk i{color:var(--cyan);font-style:normal;margin:0 12px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .mos{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:20px 0}
 .mtile{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);min-height:96px;text-decoration:none;color:var(--tx)}
 .mtile .mbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .45s}
@@ -367,6 +379,7 @@ function hub(){
   const vc=[...VIS].filter(v=>ROUTES.includes(v)).length;
   return `<div class="hero"><span class="kick" style="color:var(--cyan)">погреб одного слуха · 2015–2026 · всё кликабельно</span>
   <h1 style="background:linear-gradient(92deg,var(--pink),var(--violet) 45%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">ПОГРЕБОК</h1>
+  <div class="tick"><div class="tk">${(()=>{const t=D.tracks.slice(0,40).map(x=>`<b>${esc(x.t)}</b><i>✦</i>${esc(x.a)}<i>·</i>`).join('');return t+t;})()}</div></div>
   <div class="hsub">Не список, а погреб: ниже — коллаж из твоих самых слушаемых голосов, где размер плитки = сила привязанности. Клик по плитке — страница артиста. Меню полок — слева внизу (☰), эпохи и кабинет — справа вверху (🎨).</div></div>
   <section><h2>ТВОИ ГОЛОСА</h2><p class="lead">Десять плиток = десять самых тяжёлых привязанностей архива. Цвет плитки выводится из настроения их треков у тебя: красный — напор, синий — замирание, бирюза — тепло, янтарь — свет.</p>
   ${mosaic(tops)}
