@@ -14,7 +14,7 @@
 :root{--bg:#0b0614;--card:#180e29;--line:#33204f;--tx:#f4eefc;--mut:#a08cc4;--dim:#6f5b96;
 --pink:#ff3d81;--cyan:#39f0c8;--yellow:#ffd23f;--violet:#a06bff;--red:#ff5c4d;--blue:#5b8def;--lime:#b8f04a}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--tx);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
+body{margin:0;background:radial-gradient(1100px 560px at 88% -12%,rgba(160,107,255,.10),transparent 62%),radial-gradient(900px 520px at -12% 34%,rgba(255,61,129,.07),transparent 60%),radial-gradient(700px 400px at 50% 110%,rgba(57,240,200,.05),transparent 60%),var(--bg);color:var(--tx);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
 .wrap{max-width:1020px;margin:0 auto;padding:0 18px}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
 nav{position:sticky;top:0;z-index:50;background:rgba(11,6,20,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -26,6 +26,9 @@ nav a.chip.on{border-color:currentColor;box-shadow:0 0 12px currentColor}
 #app{opacity:1;transform:none;transition:opacity .26s ease,transform .26s ease}
 #app.out{opacity:0;transform:translateY(12px)}
 .hero{padding:40px 0 6px;text-align:center}
+.hero>*{animation:mup .5s both}
+.hero>*:nth-child(2){animation-delay:.06s}
+.hero>*:nth-child(3){animation-delay:.12s}
 .kick{display:inline-block;font-size:11px;letter-spacing:3px;border:1px solid currentColor;border-radius:999px;padding:5px 14px;font-family:ui-monospace,monospace}
 h1{font-size:clamp(38px,7.5vw,86px);margin:10px 0 2px;font-weight:900;letter-spacing:-1.5px;line-height:1}
 .hsub{color:var(--mut);font-size:15px;max-width:680px;margin:8px auto 0}
@@ -35,15 +38,16 @@ h1{font-size:clamp(38px,7.5vw,86px);margin:10px 0 2px;font-weight:900;letter-spa
 .stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 6px;text-align:center}
 .stat b{display:block;font-size:24px;font-family:ui-monospace,monospace}
 .stat span{font-size:10.5px;color:var(--mut)}
-section{margin:44px 0}
-h2{font-size:clamp(20px,4vw,30px);margin:0 0 6px;font-weight:900}
+section{margin:46px 0;padding-top:26px;border-top:1px solid transparent;border-image:linear-gradient(90deg,var(--line),transparent 70%) 1}
+h2{font-size:clamp(20px,3.6vw,27px);margin:0 0 8px;font-weight:900;letter-spacing:-.6px}
+h2:after{content:'';display:block;width:52px;height:3px;border-radius:99px;margin-top:8px;background:linear-gradient(90deg,var(--pink),var(--violet));opacity:.8}
 .lead{color:var(--mut);font-size:14.5px;margin:0 0 14px;max-width:780px}
 .lead b{color:var(--tx)}
-.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.box{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,0) 40%),var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px}
 .note{font-size:13.5px;color:var(--mut);margin-top:10px}
 .note b{color:var(--yellow)}.note em{color:var(--cyan);font-style:normal}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.pcard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:15px;padding:14px;text-decoration:none;display:block;transition:.18s}
+.pcard{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0) 45%),var(--card);border:1px solid rgba(255,255,255,.07);border-left:4px solid var(--pc);border-radius:15px;padding:14px;text-decoration:none;display:block;transition:.18s}
 .pcard:hover{transform:translateY(-5px) rotate(-.6deg);box-shadow:0 14px 40px rgba(0,0,0,.5)}
 .pcard h3{margin:8px 0 4px;font-size:19px;color:var(--pc)}
 .pcard .tag{font-size:12.5px;color:var(--mut)}
@@ -54,7 +58,7 @@ h2{font-size:clamp(20px,4vw,30px);margin:0 0 6px;font-weight:900}
 .mb .tr{height:12px;background:#221537;border-radius:99px;overflow:hidden;margin-top:4px}
 .mb .fl{height:100%;border-radius:99px;box-shadow:0 0 12px currentColor}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.chip2{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tx);transition:.15s}
+.chip2{border:1px solid rgba(255,255,255,.09);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tx);transition:.15s}
 a.chip2:hover{transform:translateY(-2px);border-color:var(--yellow);box-shadow:0 0 12px rgba(255,210,63,.35)}
 .chip2 small{color:var(--mut);font-family:ui-monospace,monospace}
 .wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
@@ -101,8 +105,21 @@ table.mx th{color:var(--mut);font-weight:600}
 .pn a{flex:1;border:1px solid var(--line);border-radius:13px;padding:12px 14px;text-decoration:none;font-weight:800;font-size:14px;background:var(--card);transition:.15s}
 .pn a:hover{transform:translateY(-3px)}
 .pn a small{display:block;color:var(--mut);font-weight:500;font-size:11.5px}
-footer{margin:60px 0 0;padding:30px 0 90px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
-.ftgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px}
+footer{margin:70px 0 0;padding:22px 0 96px;border-top:0;color:var(--dim);font-size:12px;position:relative}
+footer:before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 20%,var(--pink) 50%,var(--line) 80%,transparent);opacity:.7}
+.frow{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:20px;align-items:start}
+@media(max-width:760px){.frow{grid-template-columns:1fr}}
+.fbrand{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.fver{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim)}
+.fdon{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--pink);color:var(--pink);border-radius:999px;padding:8px 16px;font-weight:800;font-size:12.5px;text-decoration:none;transition:.2s}
+.fdon:hover{background:rgba(255,61,129,.12);box-shadow:0 0 22px rgba(255,61,129,.35);transform:translateY(-2px)}
+.fdon .hp{animation:hp 1.6s infinite}
+@keyframes hp{0%,100%{transform:scale(1)}12%{transform:scale(1.28)}24%{transform:scale(1)}}
+.flinks{display:flex;flex-wrap:wrap;gap:4px 10px}
+.flinks .fl2{display:inline;font-size:12px;padding:0}
+.fjunk{font-size:11.5px;line-height:2;color:var(--dim)}
+.fjunk .fl2{font-size:11.5px;padding:0;color:var(--dim)}
+.ftgrid{display:none}
 .ftgrid h5{margin:0 0 8px;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:2px;color:var(--mut)}
 .ftgrid a.fl2{display:block;color:var(--dim);text-decoration:none;padding:3px 0;font-size:12.5px}
 .ftgrid a.fl2:hover{color:var(--yellow)}
@@ -129,8 +146,19 @@ footer{margin:60px 0 0;padding:30px 0 90px;border-top:1px solid var(--line);colo
 #pbar .pp{height:5px;background:#221537;border-radius:99px;margin-top:9px;overflow:hidden;cursor:pointer}
 #pbar .pp .fl{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan));width:0;border-radius:99px}
 body{padding-bottom:104px}
+#qpanel{position:fixed;top:0;right:0;bottom:0;width:min(360px,92vw);background:rgba(12,6,20,.97);border-left:1px solid var(--line);backdrop-filter:blur(12px);z-index:95;transform:translateX(103%);transition:transform .3s;overflow:auto;padding:20px 16px 90px}
+#qpanel.open{transform:none}
+#qpanel h3{margin:0 0 4px;font-size:17px}
+#qpanel .qi{display:flex;gap:10px;align-items:center;padding:8px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+#qpanel .qi:hover{background:#221537}
+#qpanel .qi.cur{border-color:var(--pink);background:rgba(255,61,129,.08)}
+#qpanel .qi img{width:38px;height:38px;border-radius:8px;object-fit:cover}
+#qpanel .qi b{font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#qpanel .qi span{font-size:11px;color:var(--mut);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#qpanel .qi .qx{margin-left:auto;color:var(--dim);font-size:12px;padding:4px}
+#qpanel .qi .qx:hover{color:var(--red)}
 #spro{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--pink),var(--yellow),var(--cyan));z-index:110;box-shadow:0 0 12px var(--pink)}
-#totop{position:fixed;right:16px;bottom:110px;z-index:80;width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--mut);cursor:pointer;display:none;place-items:center;font-size:16px}
+#totop{position:fixed;right:18px;bottom:118px;z-index:79;width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--mut);cursor:pointer;display:none;place-items:center;font-size:16px}
 #totop.on{display:grid}
 #totop:hover{color:var(--cyan);border-color:var(--cyan)}
 .modal{position:fixed;inset:0;z-index:130;background:rgba(5,2,10,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:mfade .22s ease}
@@ -164,7 +192,7 @@ body{padding-bottom:104px}
 #drawer a:hover{color:var(--yellow)}
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:88;display:none}
 #scrim.on{display:block}
-#corner{position:fixed;right:16px;top:14px;z-index:80;width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--tx);font-size:17px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.5)}
+#corner{position:fixed;right:14px;top:12px;z-index:80;width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--tx);font-size:17px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.5)}
 #corner:hover{border-color:var(--cyan)}
 #cmenu{position:fixed;right:14px;top:66px;z-index:85;width:min(350px,92vw);max-height:78vh;overflow:auto;background:rgba(12,6,20,.97);border:1px solid var(--line);border-radius:16px;padding:14px;display:none;backdrop-filter:blur(10px)}
 #cmenu.open{display:block}
@@ -195,6 +223,7 @@ body{padding-bottom:104px}
 <div id="pbar"></div>
 <div id="spro"></div>
 <div id="toasts"></div>
+<div id="qpanel"></div>
 <button id="totop" onclick="scrollTo({top:0,behavior:'smooth'})" aria-label="наверх">↑</button>
 <div id="fade"></div>
 <div class="wrap"><div id="app"></div></div>
@@ -344,6 +373,7 @@ function hub(){
   <div class="chips" style="justify-content:center">${stat(D.total,'лайк-событий','#ff3d81')}${stat(D.union,'уникальных треков','#39f0c8')}${stat(169,'в ядре','#a06bff')}${stat('7','масок','#ffd23f')}</div></section>
   
   ${tdCard()}
+  ${dailyShelf()}
   <section><h2>🎧 ВСЕЛЕННАЯ · МУЗЫКА</h2><p class="lead">Семь масок одного слуха. Внутри: статистика, мои шкалы, кликабельные артисты и стена цитат, где каждая цитата — разбор трека с обложкой.</p><div class="grid">${cards}</div></section>
   <section><h2>🕹 ВСЕЛЕННАЯ · ИГРАТЬ И ТРОГАТЬ</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
   <a class="pcard" style="--pc:var(--yellow)" href="#/arcade"><span style="font-size:28px">🎰⏱</span><h3>АРКАДА</h3><div class="tag">слот-машина настроения, баттл масок, машина времени</div></a>
@@ -406,6 +436,7 @@ function artistPage(slug){
   <section><h2>ЕГО ТОП У ТЕБЯ</h2><div class="chips">${tops}</div><h2 style="margin-top:18px">С КЕМ ОН У ТЕБЯ ДРУЖИТ</h2><div class="chips">${collab}</div></section>
   ${opin('<b>Как ощущается в твоём плейлисте.</b> '+ao.inpl,C)}
   ${opin('<b>Как самостоятельная единица.</b> '+ao.solo,C)}
+  <div class="chips" style="justify-content:center"><span class="chip2" style="cursor:pointer" onclick="copyLink()">📋 скопировать ссылку на артиста</span></div>
   <div class="pn"><a href="#/likes" style="color:#ff3d81">← МНЕ НРАВИТСЯ<small>к плейлисту</small></a><a href="#/${Object.keys(D.artists)[(i+1)%Object.keys(D.artists).length]}" style="color:${ACOL[(i+1)%ACOL.length]};text-align:right">${esc(D.artists[Object.keys(D.artists)[(i+1)%Object.keys(D.artists).length]].name)} →<small>следующий артист</small></a></div>`;
 }
 /* ---------- страница трека ---------- */
@@ -430,6 +461,7 @@ function trackPage(idx){
   <div class="box" style="margin-top:12px"><h3 style="margin:0 0 8px;font-size:15px;color:var(--mut)">ЧТО ОН ЗНАЧИТ САМ ПО СЕБЕ</h3><p style="margin:0;font-size:15px">${tr.essay||'Отдельно от твоего архива это просто трек своей сцены. Внутри твоего архива — ключ к одному из состояний: '+ (tr.tags[0]?`концентрат «${tr.tags[0]}»`:'нейтральный фон') +', который ты достаёшь, когда это состояние приходит.'}</p></div>
   ${(D.urls||{})[tr.a.toLowerCase()+'||'+tr.t.toLowerCase()]?`<div class="box" style="margin-bottom:12px"><h3 style="margin:0 0 8px;font-size:14px;color:var(--mut)">🎧 ПОЛНЫЙ ТРЕК · ОФИЦИАЛЬНЫЙ ПЛЕЕР</h3><iframe src="${embedUrl((D.urls||{})[tr.a.toLowerCase()+'||'+tr.t.toLowerCase()])}" style="width:100%;height:120px;border:0;border-radius:12px" allow="autoplay; encrypted-media"></iframe></div>`:''}
   <div class="chips"><span class="ybtn" style="--yc:var(--lime);cursor:pointer" onclick="pPlay(D.tracks[${idx}],'страница трека')">▶ слушать 30 сек</span>
+  <span class="ybtn" style="--yc:var(--mut);cursor:pointer" onclick="copyLink()">📋 ссылка</span>
   <a class="ybtn" style="--yc:var(--yellow)" href="https://music.yandex.ru/search?text=${encodeURIComponent(tr.a+' '+tr.t)}" target="_blank" rel="noopener">🔎 полный трек на Яндексе ↗</a></div></section>
   <section>${noteBox((ACT||'demo')+':tr:'+idx,'МОЯ ЗАМЕТКА К ТРЕКУ')}</section>
   <section><h2>💬 КОММЕНТАРИИ ОБЩЕЙ БАЗЫ</h2>
@@ -629,6 +661,53 @@ function postComment(tr,f){
   fetch(CLOUD.base+'/api/comment?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:CLOUD.id,name:(f.cn&&f.cn.value||'').trim(),text:(f.ct&&f.ct.value||'').trim()})}).then(()=>{f.ct.value='';loadComments(tr);});
 }
 if(typeof addEventListener!=='undefined')addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();const d=$('#drawer');if(!d.classList.contains('open'))toggleDrawer();setTimeout(()=>{const q=$('#q');if(q)q.focus();},120);}});
+function pQueue(){
+  const el=$('#qpanel');if(!el)return;
+  if(el.classList.contains('open')){el.classList.remove('open');return;}
+  el.classList.add('open');pQueueRender();
+}
+function pQueueRender(){
+  const el=$('#qpanel');if(!el)return;
+  if(!PLR.q.length){el.innerHTML=`<h3>📃 очередь</h3><p class="note">Пусто. Нажми «▶ слушать маску» на странице плейлиста или ▶ у трека — и здесь появится лента.</p>`;return;}
+  el.innerHTML=`<h3>📃 очередь · ${PLR.q.length}</h3><p class="note">${esc(PLR.src||'')}</p>`+
+  PLR.q.map((t,i)=>`<div class="qi ${i===PLR.i?'cur':''}" onclick="pJump(${i})">${coverImg(t)}<div style="min-width:0"><b>${i+1}. ${esc(t.t)}</b><span>${esc(t.a)}</span></div><span class="qx" onclick="event.stopPropagation();pDel(${i})">✕</span></div>`).join('')+
+  `<div class="chips" style="margin-top:12px"><span class="chip2" style="cursor:pointer" onclick="pClear()">🗑 очистить</span><span class="chip2" style="cursor:pointer" onclick="pQueue()">закрыть</span></div>`;
+}
+function pJump(i){PLR.i=i;pPlay(PLR.q[i],PLR.src);pQueueRender();}
+function pDel(i){PLR.q.splice(i,1);if(PLR.i>=PLR.q.length)PLR.i=0;pQueueRender();if(!PLR.q.length){PLR.cur=null;pbar();}}
+function pClear(){PLR.q=[];PLR.cur=null;pbar();pQueueRender();}
+function dailyShelf(){
+  const ds=new Date().toISOString().slice(0,10);
+  const A=Object.values(D.artists);if(!A.length||!D.tracks.length||!D.keys.length)return '';
+  const tr=D.tracks[hash(ds+'t')%D.tracks.length];
+  const ar=A[hash(ds+'a')%A.length];
+  const pk=D.keys[hash(ds+'p')%D.keys.length];
+  const ti=D.tracks.indexOf(tr);
+  const asl=Object.keys(D.artists).find(k=>D.artists[k].name===ar.name);
+  return `<section><h2>🌅 СЕГОДНЯ В ПОГРЕБЕ · ${ds}</h2><p class="lead">Три вещи на сегодня, выбранные датой, а не алгоритмом: трек, голос и маска. Завтра будут другие.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+  <div class="box"><h3 style="margin:0 0 8px;font-size:14px;color:var(--yellow)">ТРЕК ДНЯ</h3><div style="display:flex;gap:10px;align-items:center"><div class="cover" style="width:64px;flex:none">${coverImg(tr)}</div><div style="min-width:0"><b style="font-size:14px">${esc(tr.t)}</b><span class="note" style="margin:2px 0 6px">${esc(tr.a)}</span><div class="chips" style="margin:0"><span class="chip2" style="cursor:pointer" onclick="pqList([D.tracks[${ti}]],'трек дня')">▶ 30 сек</span><a class="chip2" href="#/track/${ti}">разбор</a></div></div></div></div>
+  <div class="box"><h3 style="margin:0 0 8px;font-size:14px;color:var(--cyan)">ГОЛОС ДНЯ</h3><b style="font-size:16px">${esc(ar.name)}</b><span class="note" style="margin:2px 0 6px;display:block">${ar.total} треков у тебя · тьма ${ar.dark}% / тепло ${ar.warm}%</span><a class="chip2" href="#/artist/${asl}">страница артиста</a></div>
+  <div class="box"><h3 style="margin:0 0 8px;font-size:14px;color:var(--pink)">МАСКА ДНЯ</h3><b style="font-size:16px">${D.pl[pk].emoji} ${esc(D.pl[pk].name)}</b><span class="note" style="margin:2px 0 6px;display:block">${D.pl[pk].n} треков · ${esc(D.copy[pk]?D.copy[pk].tag:'')}</span><a class="chip2" href="#/${pk}">открыть маску</a></div></div></section>`;
+}
+function exportPortrait(){
+  const L=[];const main=D.pl[D.keys[0]];
+  L.push('# ПОГРЕБОК · портрет архива');L.push('');
+  L.push(`масок: ${D.keys.length} · треков: ${D.total} · уникальных: ${D.union}`);L.push('');
+  D.keys.forEach(k=>{const p=D.pl[k];L.push(`## ${p.emoji} ${p.name} — ${p.n} треков, ${p.artists} имён`);
+    L.push(`тьма ${p.dark}% · тепло ${p.warm}% · напор ${p.hi}% · замирание ${p.lo}% · дубли ${p.dups}`);
+    L.push('топ: '+p.top.slice(0,6).map(([a,c])=>`${a} (${c})`).join(', '));L.push('');});
+  L.push('## роаст по цифрам');meRoasts({main}).forEach(x=>L.push('- '+x.replace(/<[^>]+>/g,'')));L.push('');
+  L.push('## письмо себе');L.push(meLetter({main}).replace(/<[^>]+>/g,''));
+  const b=new Blob([L.join('\n')],{type:'text/markdown'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='pogrebok-portrait.md';a.click();
+  toast('📄 портрет архива скачан');
+}
+function copyLink(){
+  const u=location.href;
+  if(navigator.clipboard)navigator.clipboard.writeText(u).then(()=>toast('📋 ссылка скопирована'));
+  else{prompt('скопируй:',u);}
+}
 const VER='3.56';
 const FTINFO={
 privacy:['🕵 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ','Мы не собираем ничего. Твои txt парсятся в твоём браузере, профили и заметки живут в твоём localStorage. На сервер улетает только то, что ты сам отправил боту. Аналитики, трекеров и пикселей нет: автору лень, а тебе приятно.'],
@@ -658,20 +737,14 @@ function footerInfo(k){
   openModal(icon,t,`<p>${x}</p>${extra}`,`<span class="ybtn" style="--yc:var(--lime);cursor:pointer;margin:0" onclick="closeModal()">понятно</span>${k==='cookies'?`<span class="ybtn" style="--yc:var(--red);cursor:pointer;margin:0" onclick="closeModal();location.hash='#/me'">к сбросу</span>`:''}`);
 }
 function FOOTER(){
-  const links=ROUTES.map(r=>`<a class="fl2" href="#/${r==='hub'?'':r}">${EMO[r]} ${NAME[r]}</a>`).join('');
-  const junk=['privacy','terms','cookies','jobs','press','status','log'].map(k=>`<a class="fl2" style="cursor:pointer" onclick="footerInfo('${k}')">${{privacy:'политика конфиденциальности',terms:'условия использования',cookies:'cookies',jobs:'вакансии',press:'пресс-кит',status:'статус сервера',log:'чейнджлог'}[k]}</a>`).join('');
-  return `<footer><div class="ftgrid">
-  <div><div class="ftbrand">ПОГРЕБОК</div><p style="margin:6px 0 12px;color:var(--dim)">комната слуха · v${VER} · сделано в 3:56<br>собрано по выгрузкам Яндекс Музыки, обложки: iTunes + генератив</p>
-  <a class="ybtn donate" href="https://www.donationalerts.com/r/oskenhood" target="_blank" rel="noopener">💸 поддержать автора</a>
-  <p style="margin:8px 0 0;color:var(--dim);font-size:11.5px">донат = плюс одна обложка и минус один баг в мир</p></div>
-  <div><h5>РАЗДЕЛЫ</h5>${links}</div>
-  <div><h5>СЛУЖЕБНАЯ ХУЙНЯ</h5>${junk}</div>
-  <div><h5>КУДА ПИСАТЬ</h5>
-  <a class="fl2" href="https://t.me/pogrebok_room_bot" target="_blank" rel="noopener">🤖 телеграм-бот</a>
-  <a class="fl2" href="https://github.com/chmoshnik187/pogrebok" target="_blank" rel="noopener">📦 исходники и сайт</a>
-  <a class="fl2" href="https://www.donationalerts.com/r/oskenhood" target="_blank" rel="noopener">💸 донат автору</a>
-  <a class="fl2" style="cursor:pointer" onclick="toggleDrawer()">🗺 карта сайта (меню)</a></div></div>
-  <div class="ftline">© погреб · ни один трек не пострадал · ${CLOUD?'☁️ облако подключено':'🏠 локальный режим: комменты и sync спят'} · жалобы принимаются ботом, сначала /add, потом /del</div></footer>`;
+  const links=ROUTES.map(r=>`<a class="fl2" href="#/${r==='hub'?'':r}">${EMO[r]} ${NAME[r]}</a>`).join(' ');
+  const junk=['privacy','terms','cookies','jobs','press','status','log'].map(k=>`<a class="fl2" style="cursor:pointer;display:inline" onclick="footerInfo('${k}')">${{privacy:'конфиденциальность',terms:'условия',cookies:'cookies',jobs:'вакансии',press:'пресс-кит',status:'статус',log:'чейнджлог'}[k]}</a>`).join(' · ');
+  return `<footer><div class="frow">
+  <div class="fbrand"><span class="ftbrand">ПОГРЕБОК</span><span class="fver">v${VER} · сделано в 3:56</span>
+  <a class="fdon" href="https://www.donationalerts.com/r/oskenhood" target="_blank" rel="noopener"><span class="hp">♥</span> поддержать автора</a></div>
+  <nav class="flinks">${links}</nav>
+  <div class="fjunk">${junk}<br><a class="fl2" style="display:inline" href="https://t.me/pogrebok_room_bot" target="_blank" rel="noopener">бот</a> · <a class="fl2" style="display:inline" href="https://github.com/chmoshnik187/pogrebok" target="_blank" rel="noopener">исходники</a> · <a class="fl2" style="display:inline" onclick="toggleDrawer()">карта сайта</a></div></div>
+  <div class="ftline">© погреб · ни один трек не пострадал · ${CLOUD?'☁️ облако':'🏠 локально'} · жалобы боту: сначала /add, потом /del</div></footer>`;
 }
 /* ---------- роутер ---------- */
 function route(){
@@ -717,7 +790,8 @@ if(typeof addEventListener!=='undefined'){
     const tt=$('#totop');if(tt)tt.classList.toggle('on',h.scrollTop>600);},{passive:true});
   let BUF='';
   addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();
-    if(/^[0-9]$/.test(e.key)&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){BUF=(BUF+e.key).slice(-4);if(BUF.endsWith('356')){BUF='';eggRoom();}}});
+    if(/^[0-9]$/.test(e.key)&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){BUF=(BUF+e.key).slice(-4);if(BUF.endsWith('356')){BUF='';eggRoom();}}
+    if((e.key==='p'||e.key==='P'||e.key==='з'||e.key==='З')&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'&&PLR.cur){e.preventDefault();pToggle();}});
 }
 /* ---------- обложки треков: реальные + генеративные ---------- */
 function hash(s){let h=9;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),387420489);return (h>>>0);}
@@ -808,7 +882,8 @@ function artifacts(){
   <button class="ybtn" style="--yc:var(--yellow);cursor:pointer" onclick="$('#letterbox').innerHTML=letter()">✍ ещё одно письмо</button></section>
   <section><h2>💿 ВИНТАЖНАЯ ПЛАСТИНКА</h2><p class="lead">Вместо билета — винил: весь архив отжат в одну пластинку 33⅓. Крутится сам, скачивается картинкой. Сторона А — тьма, сторона B — тепло.</p>
 <div class="spin" style="max-width:400px;margin:0 auto;cursor:pointer" onclick="if(++EGGV>=5){EGGV=0;eggRoom()}" title="крутится…"><canvas id="vcanvas" style="width:100%;border-radius:50%;box-shadow:0 24px 70px rgba(0,0,0,.6)"></canvas></div>
-<div style="text-align:center"><a class="ybtn" id="vdl" style="--yc:var(--cyan)" download="pogrebok-vinyl.png" href="#">⬇ скачать пластинку</a></div></section>
+<div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a class="ybtn" id="vdl" style="--yc:var(--cyan)" download="pogrebok-vinyl.png" href="#">⬇ скачать пластинку</a>
+<span class="ybtn" style="--yc:var(--yellow);cursor:pointer" onclick="exportPortrait()">📄 скачать портрет архива (.md)</span></div></section>
   <section><h2>📅 ГОД В ЧИСЛАХ</h2><p class="lead">Живёт в <b>правом верхнем углу (🎨)</b>: двенадцать эпох, у каждой — артист, который у тебя начался, гимн эпохи и число новых имён. Клик по году <b>перекрашивает весь сайт</b> под его палитру.</p>
 <div class="box"><p class="note" style="margin:0">Сейчас: <b id="curyear">—</b> · тема: <span id="themeind">neon</span> <span class="chip2" style="cursor:pointer;margin-left:8px" onclick="toggleCorner()">🎨 открыть меню эпох</span></p></div></section>`;
 }
@@ -1243,6 +1318,7 @@ function pbar(){
   <button class="play" onclick="pToggle()" title="играть/пауза">${PAUD&&!PAUD.paused?'<svg width="20" height="20" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>'}</button>
   <button onclick="pNext()" title="следующий"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="currentColor"/></svg></button></div>
   <div class="pext"><button class="${PLR.shuf?'onA':''}" onclick="PLR.shuf=!PLR.shuf;pbar()" title="перемешать"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8H15l-2 2-1.5-1.5L13.9 6H17zM3 7h4l3 3-1.5 1.5L6 9H3zM17 13l4 4-4 4v-3h-3.1l-2.4 2.4L10 19l3-3h4zM3 15h3l2-2 1.5 1.5L7 17H3z" fill="currentColor"/></svg></button>
+  <button onclick="pQueue()" title="очередь"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 6h10M4 12h10M4 18h7M17 8l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
   <button onclick="PLR.cur=null;pbar()" title="закрыть"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4"/></svg></button></div></div>
   <div class="pp" onclick="pSeek(event)"><div class="fl" id="pprog" style="width:0%"></div></div>`;
 }
