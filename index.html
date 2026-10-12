@@ -994,16 +994,16 @@ let ME=null;
 function meLoad(){try{const s=localStorage.getItem('disco_me');if(s)ME=JSON.parse(s);}catch(e){}}
 function meSave(){try{localStorage.setItem('disco_me',JSON.stringify(ME));}catch(e){}}
 meLoad();
-function meRoasts(M){const r=[];const A=M.main;const share=Math.round(100*A.top1[1]/A.n);
-  r.push(share>=15?`Один артист занимает <b>${share}%</b> архива (${esc(A.top1[0])}, ${A.top1[1]} треков). Это уже не вкус, это отношения.`:`Топ-артист занимает лишь <b>${share}%</b> (${esc(A.top1[0])}): ты не привязываешься, ты сканируешь.`);
+function meRoasts(M){const r=[];const A=M.main;const T1=A.top1||A.top[0]||['—',0];const SG=(A.segs&&A.segs.length)?A.segs:(D.seg||[]);const share=Math.round(100*T1[1]/A.n);
+  r.push(share>=15?`Один артист занимает <b>${share}%</b> архива (${esc(T1[0])}, ${T1[1]} треков). Это уже не вкус, это отношения.`:`Топ-артист занимает лишь <b>${share}%</b> (${esc(T1[0])}): ты не привязываешься, ты сканируешь.`);
   r.push(A.dark>A.warm?`Тьмы <b>${A.dark}%</b> против тепла ${A.warm}%: архив ночной, и это не оскорбление.`:`Тепла <b>${A.warm}%</b> против тьмы ${A.dark}%: архив мягче, чем выглядит.`);
   r.push(A.dups>0?`<b>${A.dups} дублей</b>: ты не чистишь архив, ты его коллекционируешь.`:`Ноль дублей: аккуратность или просто ещё не успел(а) лайкнуть одно и то же дважды.`);
-  const s0=A.segs[0],s1=A.segs[A.segs.length-1];
+  const s0=SG[0]||{ratio:1},s1=SG[SG.length-1]||{ratio:1};
   r.push(s0.ratio<s1.ratio?`Раньше ты жил(а) несколькими артистами (${s1.ratio} трек/исп.), теперь сканируешь (${s0.ratio}).`:`Ты всё ещё живёшь артистами (${s0.ratio} трек/исп. в свежем слое): верность в эпоху одноразовых плейлистов.`);
   r.push(A.night>=3?`Ночь и время — <b>${A.night}%</b> названий: официальный режим сов.`:`Ночной лексики мало (${A.night}%): возможно, ты даже спишь.`);
   return r;}
 function meLetter(M){const A=M.main;const R=n=>Math.floor(Math.random()*n);
-  const t=()=>A.top[R(Math.min(A.top.length,6))][0];
+  const t=()=>((A.top&&A.top[R(Math.min(A.top.length,6))])||['—'])[0];
   const open=[`Привет. Твой архив на ${A.n} треков только что прочитали целиком. Он ответил не сразу, но ответил.`,`Здравствуй. ${A.n} треков — это не список, это дневник, который ты вёл(а) лайками.`];
   const mid=[`Больше всего места у тебя занял ${t()} — и это не случайность, это опора.`,`Тьмы ${A.dark}%, тепла ${A.warm}%: ты держишь оба конца провода, и поэтому иногда коротит.`,`Строчных названий ${A.low}%: чувства с маленькой буквы — твой почерк.`];
   const nz=Object.entries(NOTES).filter(([k,v])=>v&&v.trim());
