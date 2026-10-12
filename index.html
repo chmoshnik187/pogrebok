@@ -129,6 +129,25 @@ footer{margin:60px 0 0;padding:30px 0 90px;border-top:1px solid var(--line);colo
 #pbar .pp{height:5px;background:#221537;border-radius:99px;margin-top:9px;overflow:hidden;cursor:pointer}
 #pbar .pp .fl{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan));width:0;border-radius:99px}
 body{padding-bottom:104px}
+#spro{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--pink),var(--yellow),var(--cyan));z-index:110;box-shadow:0 0 12px var(--pink)}
+#totop{position:fixed;right:16px;bottom:110px;z-index:80;width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--mut);cursor:pointer;display:none;place-items:center;font-size:16px}
+#totop.on{display:grid}
+#totop:hover{color:var(--cyan);border-color:var(--cyan)}
+.modal{position:fixed;inset:0;z-index:130;background:rgba(5,2,10,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:mfade .22s ease}
+@keyframes mfade{from{opacity:0}to{opacity:1}}
+.modal .mcard{max-width:520px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:0;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:mup .26s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes mup{from{transform:translateY(18px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.modal .mhead{display:flex;gap:14px;align-items:center;padding:18px 20px;background:linear-gradient(135deg,rgba(255,61,129,.14),rgba(160,107,255,.12));border-bottom:1px solid var(--line)}
+.modal .mhead .mi{font-size:34px;filter:drop-shadow(0 0 14px rgba(255,61,129,.5))}
+.modal .mhead h3{margin:0;font-size:17px;letter-spacing:.4px}
+.modal .mhead .mx{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--mut);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
+.modal .mhead .mx:hover{color:var(--red);border-color:var(--red)}
+.modal .mbody{padding:18px 20px;font-size:14px;color:var(--mut);line-height:1.65}
+.modal .mbody b{color:var(--tx)}
+.modal .mfoot{padding:0 20px 18px;display:flex;gap:8px;flex-wrap:wrap}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:104px;z-index:140;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:rgba(20,12,34,.95);border:1px solid var(--lime);color:var(--lime);border-radius:999px;padding:9px 20px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:mup .25s ease}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s;z-index:99}
 .tcov{width:100%;height:100%;object-fit:cover;display:block;border-radius:10px}
 .q .tcov{position:absolute;left:8px;top:8px;width:44px;height:44px;border-radius:8px}
@@ -174,6 +193,9 @@ body{padding-bottom:104px}
 <button id="corner" onclick="toggleCorner()" aria-label="темы и кабинет">🎨</button>
 <div id="cmenu"></div>
 <div id="pbar"></div>
+<div id="spro"></div>
+<div id="toasts"></div>
+<button id="totop" onclick="scrollTo({top:0,behavior:'smooth'})" aria-label="наверх">↑</button>
 <div id="fade"></div>
 <div class="wrap"><div id="app"></div></div>
 <script>
@@ -617,15 +639,23 @@ press:['📰 ПРЕСС-КИТ','Скрин главной и фраза «по�
 status:['📡 СТАТУС','Смотри строку состояния ниже: облако подключено или локальный режим. Если локальный — комментарии и sync спят, всё остальное работает.'],
 log:['🧾 ЧЕЙНДЖЛОГ','v3.56: плеер v2 с центрованным транспортом · поиск по сайту и общей базе · комменты и альбомы · редактор обложек v2 (шаблоны + авто по сути) · og-превью ссылки · футер, который не стыдно.']
 };
+function openModal(icon,title,bodyHTML,footHTML){
+  closeModal();
+  const d=document.createElement('div');d.className='modal';d.id='modal';
+  d.innerHTML=`<div class="mcard"><div class="mhead"><span class="mi">${icon}</span><h3>${title}</h3><button class="mx" onclick="closeModal()" aria-label="закрыть">✕</button></div>
+  <div class="mbody">${bodyHTML}</div>${footHTML?`<div class="mfoot">${footHTML}</div>`:''}</div>`;
+  d.addEventListener('click',e=>{if(e.target===d)closeModal();});
+  document.body.appendChild(d);
+}
+function closeModal(){const m=document.getElementById('modal');if(m)m.remove();}
+function toast(msg){const w=$('#toasts');if(!w)return;const d=document.createElement('div');d.className='toast';d.textContent=msg;w.appendChild(d);setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .4s';setTimeout(()=>d.remove(),420);},2600);}
 function footerInfo(k){
   const [t,x]=FTINFO[k];
-  const d=document.createElement('div');
-  d.style.cssText='position:fixed;inset:0;z-index:130;background:rgba(5,2,10,.94);display:flex;align-items:center;justify-content:center;padding:20px';
-  d.innerHTML=`<div style="max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px">
-  <h3 style="margin:0 0 10px;font-size:18px;color:var(--yellow)">${t}</h3>
-  <p style="margin:0;font-size:14px;color:var(--mut)">${x}</p>
-  <div class="chips" style="margin:14px 0 0"><span class="ybtn" style="--yc:var(--mut);cursor:pointer;margin:0" onclick="this.closest('div[style]').remove()">понятно</span></div></div>`;
-  document.body.appendChild(d);
+  const icon={privacy:'🕵',terms:'📜',cookies:'🍪',jobs:'💼',press:'📰',status:'📡',log:'🧾'}[k]||'📄';
+  let extra='';
+  if(k==='status')extra=`<p style="margin-top:10px">сейчас: <b>${CLOUD?'☁️ облако бота подключено':'🏠 локальный режим'}</b> · треков в текущем профиле: <b>${D.keys.length?D.pl[D.keys[0]].n:0}</b> · масок: <b>${D.keys.length}</b> · ачивок: <b>${ACH2.filter(a=>a[3]()).length}/${ACH2.length}</b></p>`;
+  if(k==='cookies')extra=`<p style="margin-top:10px">В твоём браузере сейчас: профили, заметки, обложки, ачивки и журнал ручной добавки. Всё ключами <span class="mono">pogreb_*</span>.</p>`;
+  openModal(icon,t,`<p>${x}</p>${extra}`,`<span class="ybtn" style="--yc:var(--lime);cursor:pointer;margin:0" onclick="closeModal()">понятно</span>${k==='cookies'?`<span class="ybtn" style="--yc:var(--red);cursor:pointer;margin:0" onclick="closeModal();location.hash='#/me'">к сбросу</span>`:''}`);
 }
 function FOOTER(){
   const links=ROUTES.map(r=>`<a class="fl2" href="#/${r==='hub'?'':r}">${EMO[r]} ${NAME[r]}</a>`).join('');
@@ -671,6 +701,9 @@ function render(){
     app.innerHTML=html+FOOTER();
     window.scrollTo({top:0,behavior:'instant'});
     app.classList.remove('out');
+    const gotN=ACH2.filter(a=>a[3]()).length;
+    if(gotN>(window.__ach||0)&&window.__ach!==undefined)toast('🏆 ачивка: '+ACH2.filter(a=>a[3]())[gotN-1][1]);
+    window.__ach=gotN;
     if(r.page==='artifacts'){$('#letterbox').innerHTML=letter();vinyl();}
     if(r.page==='arcade')tm(1);
     if(r.page==='track'){const tr=D.tracks[r.arg];if(tr)loadComments(tr);}
@@ -678,6 +711,14 @@ function render(){
   },170);
 }
 addEventListener('hashchange',render);
+if(typeof addEventListener!=='undefined'){
+  addEventListener('scroll',()=>{const h=document.documentElement;const p=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);
+    const sp=$('#spro');if(sp)sp.style.width=(100*p)+'%';
+    const tt=$('#totop');if(tt)tt.classList.toggle('on',h.scrollTop>600);},{passive:true});
+  let BUF='';
+  addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();
+    if(/^[0-9]$/.test(e.key)&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){BUF=(BUF+e.key).slice(-4);if(BUF.endsWith('356')){BUF='';eggRoom();}}});
+}
 /* ---------- обложки треков: реальные + генеративные ---------- */
 function hash(s){let h=9;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),387420489);return (h>>>0);}
 function genCover(seed,c1,c2){
@@ -904,7 +945,7 @@ function meAdd(f){
   const a=f.ta.value.replace(/\s+/g,' ').trim(),t=f.tt.value.replace(/\s+/g,' ').trim(),u=(f.tu&&f.tu.value||'').trim(),al=(f.al&&f.al.value||'').trim();if(!a||!t)return;
   const key=a.toLowerCase()+'||'+t.toLowerCase();
   if(ME.files[ME.cur].tracks.some(x=>(x[0].toLowerCase()+'||'+x[1].toLowerCase())===key)){ME.msg='Такой уже есть: '+a+' — '+t+'. Дубль не добавил.';meSave();render();return;}
-  ME.msg='Добавил: '+a+' — '+t+(u?' · с ссылкой на полный трек':'');
+  ME.msg='Добавил: '+a+' — '+t+(u?' · с ссылкой на полный трек':'');toast('＋ трек ушёл в профиль и сводку');
   ME.files[ME.cur].tracks.unshift([a,t]);
   ME.urls=ME.urls||{};if(u)ME.urls[a.toLowerCase()+'||'+t.toLowerCase()]=u;
   ME.albums=ME.albums||{};if(al)ME.albums[a.toLowerCase()+'||'+t.toLowerCase()]=al;ME.files[ME.cur].analysis=analyze(ME.files[ME.cur].tracks);
@@ -1365,8 +1406,8 @@ function openCovEditor(k){
   <span class="ybtn" style="--yc:var(--mut);cursor:pointer;margin:0" onclick="document.getElementById('coved').remove()">отмена</span></div></div>`;
   document.body.appendChild(d);covPreview();covBody();
 }
-function covReset(){if(COVED)delete COVC[COVED.k];saveCOVC();const e=document.getElementById('coved');if(e)e.remove();render();}
-function covSave(){COVC[COVED.k]=COVED.def;saveCOVC();const e=document.getElementById('coved');if(e)e.remove();render();}
+function covReset(){if(COVED)delete COVC[COVED.k];saveCOVC();toast('♻ обложка сброшена к авто');const e=document.getElementById('coved');if(e)e.remove();render();}
+function covSave(){COVC[COVED.k]=COVED.def;saveCOVC();toast('🖼 обложка сохранена');const e=document.getElementById('coved');if(e)e.remove();render();}
 function covAuto(k){COVC[k]=autoDef(k,Math.floor(Math.random()*4));saveCOVC();render();}
 
 
