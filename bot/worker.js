@@ -20,6 +20,48 @@ function parseTxt(text) {
   }
   return out;
 }
+/* Полка для всего, что человек добавил руками (ботом или формой на сайте).
+   Больше никакие ручные треки не сваливаются в чужие плейлисты. */
+const MANUAL = 'Понравившиеся треки';
+function ensureManual(p) {
+  p.files = p.files || [];
+  let f = p.files.find(x => x.name === MANUAL);
+  if (!f) { f = { name: MANUAL, tracks: [] }; p.files.push(f); }
+  return f;
+}
+/* .html экспорт: страница плейлиста Я.Музыки, сохранённая из браузера.
+   Треки лежат в встроенном JSON: "artists":[{"name":"…"}] … "title":"…".
+   Запасные пути: формат «1. Артист - Трек» под тегами и строки «Артист — Трек». */
+function unescJson(s) {
+  return s.replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\(.)/g, (m, c) => ({ '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' }[c] || c));
+}
+function parseHtml(html) {
+  const out = []; const seen = new Set();
+  const push = (a, t) => { a = (a || '').trim(); t = (t || '').trim(); if (!a || !t) return;
+    const k = a.toLowerCase() + '||' + t.toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push([a, t]); } };
+  const STR = '"((?:[^"\\\\]|\\\\.)*)"';
+  let m;
+  const re1 = new RegExp('"artists":\\s*\\[\\s*\\{\\s*"name":\\s*' + STR, 'g');
+  while ((m = re1.exec(html))) {
+    const tm = html.slice(m.index, m.index + 3000).match(new RegExp('"title":\\s*' + STR));
+    if (tm) push(unescJson(m[1]), unescJson(tm[1]));
+  }
+  if (out.length) return out; /* формат Я.Музыки подтверждён: обратный проход только породил бы пары «альбом→артист» */
+  const re2 = new RegExp('"title":\\s*' + STR, 'g');
+  while ((m = re2.exec(html))) {
+    const am = html.slice(m.index, m.index + 3000).match(new RegExp('"artists":\\s*\\[\\s*\\{\\s*"name":\\s*' + STR));
+    if (am) push(unescJson(am[1]), unescJson(m[1]));
+  }
+  if (out.length >= 3) return out;
+  const txt = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, '\n');
+  const pt = parseTxt(txt); if (pt.length >= 3) return pt;
+  for (const ln of txt.split('\n')) {
+    const mm = ln.trim().match(/^(.{2,80}?)\s+[—–-]\s+(.{2,120})$/);
+    if (mm) push(mm[1], mm[2]);
+  }
+  return out;
+}
 const api = (T, m, body) => fetch(`https://api.telegram.org/bot${T}/${m}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 const send = (T, chat, text) => api(T, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true });
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -30,7 +72,7 @@ const MENU_CMDS = [
   { command: 'stats', description: 'сводка: полки, треки, имена' },
   { command: 'list', description: 'полки и их треки постранично' },
   { command: 'add', description: 'добавить трек: /add Артист - Трек' },
-  { command: 'del', description: 'удалить трек по номеру из 1-й полки' },
+  { command: 'del', description: 'удалить трек по номеру из «Понравившихся»' },
   { command: 'find', description: 'где играет трек: Apple/Deezer/поиск' },
   { command: 'locker', description: 'мой локер mp3' },
   { command: 'play', description: 'слушать трек из локера' }
@@ -40,14 +82,15 @@ const HELP = `<b>ПОГРЕБОК · справочник команд</b>
 /stats — сводка профиля: сколько полок, треков и имён живёт у бота.
 /list — список полок с числом треков.
 /list ИМЯ или /list 1 — треклист полки по 60 треков; страницы: /list ИМЯ 2, /list ИМЯ 3…
-/add Артист - Трек [ссылка] — вручную вкатить трек в первую полку; обложка подтянется из Apple Music, ссылка — для полного прослушивания на сайте.
+/add Артист - Трек [ссылка] — вручную вкатить трек. Все ручные треки живут в отдельной полке «Понравившиеся треки» и больше не сваливаются в чужие плейлисты; обложка подтянется из Apple Music, ссылка — для полного прослушивания на сайте.
 /add! Артист - Трек — то же, но силой: даже если трек уже есть (дубли бывают искусством).
-/del N — удалить N-й трек первой полки (нумерация с 1, как в /list 1).
+/del N — удалить N-й трек из полки «Понравившиеся треки» (нумерация с 1, как в /list этой полки).
 /find Артист - Трек — проверка, где трек вообще играет: Apple Music, Deezer + ссылки на поиск в Яндексе, Spotify, YouTube, SoundCloud, Bandcamp.
 /locker — список твоих mp3, загруженных файлом.
 /play SLUG — слушать трек из локера (slug виден в /locker).
 /help — этот список, вдруг ты забыл, кто ты.
 Файлом .txt — загрузить или перезаписать полку (формат экспорта Яндекса: «1. Артист - Трек»).
+Файлом .html — тоже полка: страница плейлиста Я.Музыки, сохранённая из браузера («Сохранить как → только HTML»). Треки вытащу из встроенных данных страницы, сторонние конвертеры не нужны.
 Файлом .mp3 — положить трек в локер, чтобы стримить его себе из облака.`;
 
 async function getProf(env, id) { return (await env.POGREB.get('prof:' + id, 'json')) || { files: [], urls: {}, art: {}, albums: {}, locker: {} }; }
@@ -92,11 +135,12 @@ async function handleUpdate(env, T, u, ORIGIN) {
   const BOT = env.BOT_USER || 'pogrebok_room_bot';
   if (msg.document && !msg.text) {
     const d = msg.document;
-    if (!/\.txt$/i.test(d.file_name || '') && !(d.mime_type || '').startsWith('text')) return send(T, chat, 'Жду .txt файл экспорта.');
+    if (!/\.(txt|html?)$/i.test(d.file_name || '') && !/^text\/(plain|html)/.test(d.mime_type || '')) return send(T, chat, 'Жду .txt или .html файл экспорта.');
     const gf = await (await api(T, 'getFile', { file_id: d.file_id })).json();
     const text = await (await fetch(`https://api.telegram.org/file/bot${T}/${gf.result.file_path}`)).text();
-    const tracks = parseTxt(text); if (!tracks.length) return send(T, chat, 'Не разобрал файл: нужен формат «1. Артист - Трек».');
-    const name = (d.file_name || 'плейлист').replace(/\.txt$/i, '');
+    const tracks = (/\.html?$/i.test(d.file_name || '') || /^\s*<(?:!doctype|html)/i.test(text.slice(0, 300))) ? parseHtml(text) : parseTxt(text);
+    if (!tracks.length) return send(T, chat, 'Не разобрал файл: нужен формат «1. Артист - Трек» (txt) или страница плейлиста Я.Музыки, сохранённая как .html.');
+    const name = (d.file_name || 'плейлист').replace(/\.(txt|html?)$/i, '');
     prof.files = prof.files.filter(f => f.name !== name); prof.files.push({ name, tracks });
     await putProf(env, chat, prof);
     const n = prof.files.reduce((s, f) => s + f.tracks.length, 0);
@@ -119,7 +163,7 @@ async function handleUpdate(env, T, u, ORIGIN) {
       return send(T, chat, 'Не нашёл в локере. Пришли mp3 файлом.');
     }
     if (!prof.menu) { prof.menu = 1; await putProf(env, chat, prof); api(T, 'setMyCommands', { commands: MENU_CMDS }).catch(() => {}); }
-    return send(T, chat, 'Я — погребок. Кидай .txt экспорт — соберу комнату.\nКидай mp3 — положу в локер и буду стримить тебе.\nКоманды: /my /stats /list /add /add! /del /find /locker /play\nСправочник по каждой: /help');
+    return send(T, chat, 'Я — погребок. Кидай .txt или .html экспорт — соберу комнату.\nКидай mp3 — положу в локер и буду стримить тебе.\n/add Артист - Трек — падает в полку «Понравившиеся треки».\nКоманды: /my /stats /list /add /add! /del /find /locker /play\nСправочник по каждой: /help');
   }
   if (text.startsWith('/help')) return send(T, chat, HELP);
   if (text.startsWith('/list')) {
@@ -167,24 +211,28 @@ async function handleUpdate(env, T, u, ORIGIN) {
     const m = text.slice(force ? 5 : 4).trim().match(/^(.+?)\s+-\s+(.+?)(?:\s+(https?:\/\/\S+))?$/);
     if (!m) return send(T, chat, 'Формат: /add Артист - Трек [ссылка]  (или /add! для дубля)');
     const a = m[1].replace(/\s+/g, ' ').trim(), t = m[2].replace(/\s+/g, ' ').trim(), u = m[3];
-    if (!prof.files.length) return send(T, chat, 'Сначала пришли .txt — создам профиль.');
     const k = keyOf(a, t);
     if (!force && prof.files.some(f => f.tracks.some(x => keyOf(x[0], x[1]) === k))) return send(T, chat, `Такой уже есть: <b>${a} — ${t}</b>. Дубль: /add! ${a} - ${t}`);
-    prof.files[0].tracks.unshift([a, t]);
+    const hadFiles = prof.files.length > 0;
+    const man = ensureManual(prof);
+    man.tracks.unshift([a, t]);
     if (u) prof.urls[k] = u;
     const it = await itunes(a + ' ' + t);
     let art = null;
     for (const r of it.results || []) if (norm(r.trackName) && (norm(t).slice(0, 14).includes(norm(r.trackName).slice(0, 14)) || norm(r.trackName).slice(0, 14).includes(norm(t).slice(0, 14)))) { art = (r.artworkUrl100 || '').replace('100x100bb', '600x600bb') || null; break; }
     if (art) prof.art[k] = art;
     await putProf(env, chat, prof);
-    return send(T, chat, `Добавил: ${a} — ${t}` + (u ? ' · полный трек по ссылке' : '') + (art ? ' · 🖼 обложка подтянулась' : ' · 🖼 обложки в каталоге нет, сайт нарисует свою'));
+    const link = !hadFiles ? roomLink(env, chat, ORIGIN) : '';
+    return send(T, chat, `Добавил в полку <b>«${MANUAL}»</b>: ${a} — ${t}` + (u ? ' · полный трек по ссылке' : '') + (art ? ' · 🖼 обложка подтянулась' : ' · 🖼 обложки в каталоге нет, сайт нарисует свою') + (!hadFiles && link ? `\nПрофиль создан с нуля. Твоя комната: ${link}` : ''));
   }
   if (text.startsWith('/del')) {
+    const man = prof.files.find(f => f.name === MANUAL);
     const i = parseInt(text.slice(4).trim(), 10) - 1;
-    if (!prof.files.length || !(i >= 0 && i < prof.files[0].tracks.length)) return send(T, chat, 'Нет такого номера.');
-    const [a, t] = prof.files[0].tracks.splice(i, 1)[0];
+    if (!man || !man.tracks.length) return send(T, chat, `В полке «${MANUAL}» пусто — удалять нечего. Добавить: /add Артист - Трек`);
+    if (!(i >= 0 && i < man.tracks.length)) return send(T, chat, `Нет такого номера в «${MANUAL}». Весь список: /list ${prof.files.indexOf(man) + 1}`);
+    const [a, t] = man.tracks.splice(i, 1)[0];
     await putProf(env, chat, prof);
-    return send(T, chat, `Удалил: ${a} — ${t}`);
+    return send(T, chat, `Удалил из «${MANUAL}»: ${a} — ${t}`);
   }
   return send(T, chat, 'Не понял команды. Полный справочник: /help · список полок: /list · или просто пришли .txt / mp3 файлом.');
 }
@@ -216,12 +264,19 @@ export default {
     }
     if (u.pathname === '/api/add' && req.method === 'POST') {
       const b = await req.json(); const p = await getProf(env, id);
-      if (!p.files.length) return j({ error: 'profile empty' }, 400);
-      const i = (b.pl || 0) % p.files.length;
-      p.files[i].tracks.unshift([b.a, b.t]);
+      if (!b.a || !b.t) return j({ error: 'a,t required' }, 400);
+      const man = ensureManual(p);
+      man.tracks.unshift([b.a.trim(), b.t.trim()]);
       if (b.url) p.urls[keyOf(b.a, b.t)] = b.url;
       if (b.album) p.albums[keyOf(b.a, b.t)] = b.album;
-      await putProf(env, id, p); return j({ ok: true, n: p.files[i].tracks.length });
+      await putProf(env, id, p); return j({ ok: true, n: man.tracks.length, shelf: MANUAL });
+    }
+    if (u.pathname === '/api/delshelf' && req.method === 'POST') {
+      const b = await req.json(); const p = await getProf(env, id);
+      if (!b.name) return j({ error: 'name required' }, 400);
+      const before = (p.files || []).length;
+      p.files = (p.files || []).filter(f => f.name !== b.name);
+      await putProf(env, id, p); return j({ ok: true, removed: before - p.files.length });
     }
     if (u.pathname === '/api/search') {
       const c = await getCat(env); const q = (u.searchParams.get('q') || '').toLowerCase(); const out = [];
