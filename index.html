@@ -465,7 +465,7 @@ const tkKey=tr=>(tr.a||'').toLowerCase()+'||'+(tr.t||'').toLowerCase();
 function inkCandidates(){const out=[];inplMap().forEach((v,k)=>{const i=k.indexOf('||');const a=k.slice(0,i),t=k.slice(i+2);if(!t)return;if(tags_of(t).length)return;out.push({a,t});});return out;}
 function loadVotes(tr,idx){const el=$('#votebox');if(!el)return;const own=isOwn(tr);
   if(typeof fetch==='undefined'){el.innerHTML='<p class="note" style="margin:0">Голоса спят: нет связи с облаком погреба. Выдуманной статистики тут не будет.</p>';return;}
-  fetch(voteBase()+'/api/votes?tk='+encodeURIComponent(tkKey(tr))+'&uid='+encodeURIComponent(pgUid())).then(r=>r.json()).then(v=>{
+  fetch(voteBase()+'/api/votes?tk='+encodeURIComponent(tkKey(tr))+'&uid='+encodeURIComponent(pgUid())).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(v=>{
     const ents=Object.entries(v.counts||{}).sort((a,b)=>b[1]-a[1]);const total=v.total||0;
     const bars=ents.map(([c,n2])=>{const col=((TAGC2[c]||['#a06bff'])[0]);const pct=total?Math.round(100*n2/total):0;
       return `<div class="mb"><div class="l"><span style="color:${col}">${esc(c)}</span><span>${pct}% · ${n2} чел.</span></div><div class="tr"><div class="fl" style="width:${pct}%;background:${col};color:${col}"></div></div></div>`;}).join('');
@@ -476,11 +476,11 @@ function loadVotes(tr,idx){const el=$('#votebox');if(!el)return;const own=isOwn(
     const chips=own?`<div class="chips" style="margin-top:8px">${INKS.map(c=>{const col=(TAGC2[c]||['#a06bff'])[0];return `<span class="chip2" style="cursor:pointer;border-color:${col};color:${col};${v.mine===c?'box-shadow:0 0 12px '+col+';':''}" onclick="voteSend(${idx},'${c}')">${c}</span>`;}).join('')}</div>`
       :`<p class="note" style="margin:0">Опросник открывается только на треки, которые люди сами принесли в свои архивы. Этого трека в твоём профиле нет — голосовать нельзя, смотреть можно.</p>`;
     el.innerHTML=`<h3 style="margin:0 0 8px;font-size:15px">КАКОГО ОКРАСА ЭТО ТРЕК · СВОДКА ГОЛОСОВ</h3>`+(bars||'')+src+mine+chips;
-  }).catch(()=>{el.innerHTML='<p class="note" style="margin:0">Облако погреба не отвечает: сводка голосов недоступна офлайн. Выдумывать числа не будем.</p>';});}
+  }).catch(()=>{el.innerHTML='<p class="note" style="margin:0">Облако погреба не отвечает (или воркер ещё не прошит до версии с голосами): сводки нет, и выдуманной не будет. Прошьют воркер — голоса появятся сами.</p>';});}
 function voteSend(idx,color){const tr=D.tracks[idx];if(!tr)return;
   if(typeof fetch==='undefined'){toast('☁️ нет связи с облаком: голос не ушёл');return;}
   fetch(voteBase()+'/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tk:tkKey(tr),color:color,uid:pgUid()})})
-    .then(r=>r.json()).then(()=>{toast('🎨 голос учтён: '+color);loadVotes(tr,idx);})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(()=>{toast('🎨 голос учтён: '+color);loadVotes(tr,idx);})
     .catch(()=>toast('☁️ не достучался до облака: голос не ушёл'));}
 function openInkModal(){const c=inkCandidates().slice(0,10);
   if(!c.length){openModal('🎨','ОКРАСЫ','<p style="margin:0">Словарь настроения раскрасил все треки твоего архива сам: помогать нечему. Голосовать можно на страницах треков без окраса — но таких у тебя нет.</p>','<span class="ybtn" style="--yc:var(--lime);cursor:pointer;margin:0" onclick="closeModal()">понятно</span>');return;}
