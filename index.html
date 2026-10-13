@@ -500,7 +500,7 @@ function meAllMore(){const box=$('#meallbox');if(!box)return;const from=box.chil
 function meAllTracks(){if(!D.keys.length)return '';const rows=[];
   inplMap().forEach((v,k)=>{const i=k.indexOf('||');rows.push([k.slice(0,i),k.slice(i+2),v.length]);});
   rows.sort((x,y)=>y[2]-x[2]||x[0].localeCompare(y[0]));window.__meAll=rows;
-  return `<section><h2>📦 ВСЁ, ЧТО ТЫ ПРИНЁС · ${rows.length}</h2><p class="lead">Каждый трек, который ты добавил на свой аккаунт: все полки вместе, дубли схлопнуты. Число справа — в скольких полках он живёт. Каждый трек кликабелен.</p>
+  return `<section><h2>🎵 ВСЁ, ЧТО ТЫ ПРИНЁС · ${rows.length}</h2><p class="lead">Вся библиотека одним списком: загруженные плейлисты + полка «${MANUAL}», дубли схлопнуты. Число справа — в скольких полках трек живёт. Каждый трек кликабелен.</p>
   <div class="box tl" id="meallbox">${meAllRows(0,150)}</div>${rows.length>150?`<span class="ybtn" id="meallbtn" style="--yc:var(--cyan);cursor:pointer;margin-top:10px" onclick="meAllMore()">показать ещё · скрыто ${rows.length-150}</span>`:''}</section>`;}
 /* ---------- страница артиста ---------- */
 function artistPage(slug){
@@ -1068,6 +1068,33 @@ function parseTxt(txt){
   }
   return out;
 }
+/* Всё, что добавлено руками (ботом или формой), живёт в отдельной полке и не сваливается в чужие плейлисты */
+const MANUAL='Понравившиеся треки';
+const isManual=n=>/^понравившиеся/i.test((n||'').trim());
+/* .html экспорт: страница плейлиста Я.Музыки, сохранённая из браузера.
+   Треки лежат во встроенном JSON: "artists":[{"name":"…"}] … "title":"…" (ключи по алфавиту).
+   Запасные пути: «1. Артист - Трек» под тегами и строки «Артист — Трек». */
+function unescJson(s){return s.replace(/\\u([0-9a-fA-F]{4})/g,(m,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\(.)/g,(m,c)=>({'"':'"','\\':'\\','/':'/',b:'\b',f:'\f',n:'\n',r:'\r',t:'\t'}[c]||c));}
+function parseHtml(html){
+  const out=[];const seen=new Set();
+  const push=(a,t)=>{a=(a||'').trim();t=(t||'').trim();if(!a||!t)return;
+    const k=a.toLowerCase()+'||'+t.toLowerCase();if(!seen.has(k)){seen.add(k);out.push([a,t]);}};
+  const STR='"((?:[^"\\\\]|\\\\.)*)"';let m;
+  const re1=new RegExp('"artists":\\s*\\[\\s*\\{\\s*"name":\\s*'+STR,'g');
+  while((m=re1.exec(html))){const tm=html.slice(m.index,m.index+3000).match(new RegExp('"title":\\s*'+STR));
+    if(tm)push(unescJson(m[1]),unescJson(tm[1]));}
+  if(out.length)return out; /* формат Я.Музыки подтверждён: обратный проход только породил бы пары «альбом→артист» */
+  const re2=new RegExp('"title":\\s*'+STR,'g');
+  while((m=re2.exec(html))){const am=html.slice(m.index,m.index+3000).match(new RegExp('"artists":\\s*\\[\\s*\\{\\s*"name":\\s*'+STR));
+    if(am)push(unescJson(am[1]),unescJson(m[1]));}
+  if(out.length>=3)return out;
+  const txt=html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,'\n');
+  const pt=parseTxt(txt);if(pt.length>=3)return pt;
+  for(const ln of txt.split('\n')){const mm=ln.trim().match(/^(.{2,80}?)\s+[—–-]\s+(.{2,120})$/);
+    if(mm)push(mm[1],mm[2]);}
+  return out;
+}
+function pickParse(name,text){return (/\.html?$/i.test(name||'')||/^\s*<(?:!doctype|html)/i.test((text||'').slice(0,300)))?parseHtml(text):parseTxt(text);}
 function pc(list,ws){const n=list.length||1;return +(100*list.filter(t=>ws.some(w=>t.includes(w))).length/n).toFixed(1);}
 function analyze(tr){
   const T=tr.map(x=>x[1].toLowerCase());
@@ -1089,7 +1116,7 @@ let ME=null;
 function meLoad(){try{const s=localStorage.getItem('disco_me');if(s)ME=JSON.parse(s);}catch(e){}}
 function meSave(){try{localStorage.setItem('disco_me',JSON.stringify(ME));}catch(e){}}
 meLoad();
-function meRoasts(M){const r=[];const A=M.main;const T1=A.top1||A.top[0]||['—',0];const SG=(A.segs&&A.segs.length)?A.segs:(D.seg||[]);const share=Math.round(100*T1[1]/A.n);
+function meRoasts(M){const r=[];const A=M.main;const T1=A.top1||A.top[0]||['—',0];const SG=(A.segs&&A.segs.length)?A.segs:(D.seg||[]);const share=A.n?Math.round(100*T1[1]/A.n):0;
   r.push(share>=15?`Один артист занимает <b>${share}%</b> архива (${esc(T1[0])}, ${T1[1]} треков). Это уже не вкус, это отношения.`:`Топ-артист занимает лишь <b>${share}%</b> (${esc(T1[0])}): ты не привязываешься, ты сканируешь.`);
   r.push(A.dark>A.warm?`Тьмы <b>${A.dark}%</b> против тепла ${A.warm}%: архив ночной, и это не оскорбление.`:`Тепла <b>${A.warm}%</b> против тьмы ${A.dark}%: архив мягче, чем выглядит.`);
   r.push(A.dups>0?`<b>${A.dups} дублей</b>: ты не чистишь архив, ты его коллекционируешь.`:`Ноль дублей: аккуратность или просто ещё не успел(а) лайкнуть одно и то же дважды.`);
@@ -1107,22 +1134,33 @@ function meLetter(M){const A=M.main;const R=n=>Math.floor(Math.random()*n);
   return `<p>${open[R(open.length)]}</p><p>${mid[R(mid.length)]} ${mid[R(mid.length)]}</p>${nzl}<p style="color:var(--yellow)">${end[R(end.length)]}</p><p style="color:var(--dim);font-size:12px">— подписано: погребок, прочитавший тебя за 40 миллисекунд</p>`;}
 function meExport(){
   if(!ME)return;
-  const txt=ME.files[ME.cur].tracks.map(([a,t],i)=>`${i+1}. ${a} - ${t}`).join('\n');
+  const rows=[];inplMap().forEach((v,k)=>{const i=k.indexOf('||');rows.push([k.slice(0,i),k.slice(i+2),v.length]);});
+  rows.sort((x,y)=>y[2]-x[2]||x[0].localeCompare(y[0]));
+  const txt=rows.map(([a,t],i)=>`${i+1}. ${a} - ${t}`).join('\n');
   const b=new Blob([txt],{type:'text/plain'});const u=URL.createObjectURL(b);
-  const a=document.createElement('a');a.href=u;a.download=(ME.files[ME.cur].name||'playlist')+'_updated.txt';a.click();
+  const a=document.createElement('a');a.href=u;a.download='всё_что_ты_принёс.txt';a.click();
 }
+function meExportIdx(i){const f=(ME&&ME.files||[])[i];if(!f)return;
+  const txt=f.tracks.map(([a,t],j)=>`${j+1}. ${a} - ${t}`).join('\n');
+  const b=new Blob([txt],{type:'text/plain'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=(f.name||'playlist')+'.txt';a.click();}
+function meManualIdx(){let i=ME.files.findIndex(f=>isManual(f.name));
+  if(i<0){ME.files.push({name:MANUAL,tracks:[],analysis:analyze([])});i=ME.files.length-1;}
+  return i;}
 function meAdd(f){
   const a=f.ta.value.replace(/\s+/g,' ').trim(),t=f.tt.value.replace(/\s+/g,' ').trim(),u=(f.tu&&f.tu.value||'').trim(),al=(f.al&&f.al.value||'').trim();if(!a||!t)return;
   const key=a.toLowerCase()+'||'+t.toLowerCase();
-  if(ME.files[ME.cur].tracks.some(x=>(x[0].toLowerCase()+'||'+x[1].toLowerCase())===key)){ME.msg='Такой уже есть: '+a+' — '+t+'. Дубль не добавил.';meSave();render();return;}
-  ME.msg='Добавил: '+a+' — '+t+(u?' · с ссылкой на полный трек':'');toast('＋ трек ушёл в профиль и сводку');
-  ME.files[ME.cur].tracks.unshift([a,t]);
-  ME.urls=ME.urls||{};if(u)ME.urls[a.toLowerCase()+'||'+t.toLowerCase()]=u;
-  ME.albums=ME.albums||{};if(al)ME.albums[a.toLowerCase()+'||'+t.toLowerCase()]=al;ME.files[ME.cur].analysis=analyze(ME.files[ME.cur].tracks);
-  ME.log=ME.log||[];ME.log.unshift({ts:Date.now(),pl:ME.files[ME.cur].name,a,t});
+  const dup=ME.files.find(x=>x.tracks.some(y=>(y[0].toLowerCase()+'||'+y[1].toLowerCase())===key));
+  if(dup){ME.msg='Такой уже есть в полке «'+dup.name+'»: '+a+' — '+t+'. Дубль не добавил.';meSave();render();return;}
+  const man=ME.files[meManualIdx()];
+  ME.msg='Добавил в «'+MANUAL+'»: '+a+' — '+t+(u?' · с ссылкой на полный трек':'');toast('＋ трек ушёл в «'+MANUAL+'»');
+  man.tracks.unshift([a,t]);
+  ME.urls=ME.urls||{};if(u)ME.urls[key]=u;
+  ME.albums=ME.albums||{};if(al)ME.albums[key]=al;man.analysis=analyze(man.tracks);
+  ME.log=ME.log||[];ME.log.unshift({ts:Date.now(),pl:MANUAL,a,t});
   fetchArt(a,t).then(u=>{if(u){ME.art=ME.art||{};ME.art[a.toLowerCase()+'||'+t.toLowerCase()]=u;D.art=D.art||{};D.art[a.toLowerCase()+'||'+t.toLowerCase()]=u;
     if(ACT&&PROFS[ACT]){PROFS[ACT].art=ME.art;saveProfs();}meSave();render();}});
-  if(CLOUD&&typeof fetch!=='undefined')fetch(CLOUD.base+'/api/add?id='+encodeURIComponent(CLOUD.id),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pl:ME.cur,a,t,url:u})}).catch(()=>{});
+  if(CLOUD&&typeof fetch!=='undefined')fetch(CLOUD.base+'/api/add?id='+encodeURIComponent(CLOUD.id),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({a,t,url:u,album:al})}).catch(()=>{});
   meSave();if(ACT&&PROFS[ACT]){PROFS[ACT].files=ME.files;PROFS[ACT].urls=ME.urls||{};PROFS[ACT].albums=ME.albums||{};saveProfs();}D=buildProfile(ME.files,ME.urls,ME);
   render();
 }
@@ -1141,9 +1179,46 @@ function meDigest(){
 function meFiles(fl){
   const files=[];let pend=fl.length;
   for(const f of fl){const r=new FileReader();
-    r.onload=()=>{const tr=parseTxt(r.result);if(tr.length)files.push({name:f.name.replace(/\.txt$/i,''),tracks:tr,analysis:analyze(tr)});
+    r.onload=()=>{const tr=pickParse(f.name,r.result);if(tr.length)files.push({name:f.name.replace(/\.(txt|html?)$/i,''),tracks:tr,analysis:analyze(tr)});else toast('⚠️ не разобрал файл: '+f.name);
       if(--pend===0)meCommit(files);};
     r.readAsText(f);}
+}
+/* дозагрузка полок в текущий профиль (вкладка «Плейлисты» в кабинете) */
+function meFilesMore(fl){
+  if(!fl||!fl.length)return;
+  const add=[];let pend=fl.length;
+  for(const f of fl){const r=new FileReader();
+    r.onload=()=>{const tr=pickParse(f.name,r.result);
+      if(tr.length)add.push({name:f.name.replace(/\.(txt|html?)$/i,''),tracks:tr,analysis:analyze(tr)});else toast('⚠️ не разобрал файл: '+f.name);
+      if(--pend===0)meMergeFiles(add);};
+    r.readAsText(f);}
+}
+function meMergeFiles(add){
+  if(!add.length)return;
+  if(!ME||!ME.files||(ME.synth&&ACT!=='cloud')){meCommit(add);return;}
+  add.forEach(f=>{const i=ME.files.findIndex(x=>x.name===f.name);if(i>=0)ME.files[i]=f;else ME.files.push(f);});
+  if(ACT&&PROFS[ACT]){PROFS[ACT].files=ME.files.map(f=>({name:f.name,tracks:f.tracks}));saveProfs();}
+  if(CLOUD&&typeof fetch!=='undefined')cloudPushFiles(ME.files);
+  meSave();D=buildProfile(ME.files,ME.urls,ME);render();toast('📥 полки приняты: '+add.map(f=>f.name).join(', '));
+}
+function cloudPushFiles(files){
+  fetch(CLOUD.base+'/api/profile?id='+encodeURIComponent(CLOUD.id)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(p=>{
+    p.files=(p.files||[]).filter(f=>!files.some(x=>x.name===f.name));
+    files.forEach(f=>p.files.push({name:f.name,tracks:f.tracks}));
+    return fetch(CLOUD.base+'/api/profile?id='+encodeURIComponent(CLOUD.id),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+  }).then(()=>{}).catch(()=>toast('☁️ облако не приняло обновление — новые полки пока живут только в этом браузере'));
+}
+function meDelFile(i){
+  if(!ME||!ME.files[i])return;
+  const nm=ME.files[i].name;
+  if(!confirm('удалить полку «'+nm+'» и все её треки из профиля?'))return;
+  ME.files.splice(i,1);if(ME.cur>=ME.files.length)ME.cur=Math.max(0,ME.files.length-1);
+  if(ACT&&PROFS[ACT]){PROFS[ACT].files=ME.files.map(f=>({name:f.name,tracks:f.tracks}));saveProfs();}
+  if(CLOUD&&typeof fetch!=='undefined')fetch(CLOUD.base+'/api/delshelf?id='+encodeURIComponent(CLOUD.id),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm})}).catch(()=>{});
+  meSave();
+  if(ME.files.length){D=buildProfile(ME.files,ME.urls,ME);toast('🗑 полка «'+nm+'» удалена');}
+  else{D=DEMO;ACT=null;saveProfs();toast('🗑 профиль пуст: загрузи txt/html или добавь трек');}
+  render();
 }
 function meCommit(files){
   if(!files.length)return;
@@ -1161,25 +1236,51 @@ function meRender(){
   ${CLOUD?`<span class="chip2" style="cursor:pointer;${ACT==='cloud'?'border-color:var(--cyan);color:var(--cyan)':''}" onclick="cloudLoad()">☁️ облако бота</span>`:''}</div>`;
   if(!profs.length&&!ME)return `<div class="hero"><span class="kick" style="color:var(--cyan)">личный режим · без сервера, всё в браузере</span>
   <h1 style="background:linear-gradient(92deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent">ТВОЙ АРХИВ</h1>
-  <div class="hsub">Закинь txt-экспорты плейлистов (ymusicexport.ru или экспорт Яндекс Музыки). Сайт <b>полностью станет твоим</b>: меню, главная, обложки, игры — всё пересоберётся под твои данные, а мои треки исчезнут из вида. Ничего не уходит на сервер.</div></div>
+  <div class="hsub">Закинь экспорты плейлистов: <b>.txt</b> (ymusicexport.ru или экспорт Яндекс Музыки) или <b>.html</b> — страницу плейлиста, сохранённую из браузера («Сохранить как → только HTML»), треки вытащим сами, без сторонних конвертеров. Сайт <b>полностью станет твоим</b>: меню, главная, обложки, игры — всё пересоберётся под твои данные, а мои треки исчезнут из вида. Треки, добавленные руками (ботом или формой), живут в отдельной полке <b>«Понравившиеся треки»</b>. Ничего не уходит на сервер.</div></div>
   <section><div class="box" style="text-align:center;padding:34px">
-  <input type="file" accept=".txt,text/plain" multiple onchange="meFiles(this.files)" style="font-size:14px">
+  <input type="file" accept=".txt,.html,.htm,text/plain,text/html" multiple onchange="meFiles(this.files)" style="font-size:14px">
   <p class="note" style="margin:12px 0 0">Несколько файлов = несколько масок + пересечения. Обложки сгенерируются под вайб каждого плейлиста автоматически.</p></div></section>
   <section><div class="box"><p class="note" style="margin:0">Просто посмотреть, как это работает на чужом примере? Сейчас сайт показывает <b>демо-режим автора</b> (мои 7 плейлистов). После загрузки твоих файлов демо скроется.</p></div>
 <div class="box" style="margin-top:12px"><h3 style="margin:0 0 8px;font-size:15px">🤖 ХОЧЕШЬ КОМНАТУ ПО ССЫЛКЕ, БЕЗ ЭТОГО ФАЙЛА?</h3>
 <p class="note" style="margin:0">Есть телеграм-бот <b>погребок-бот</b> (код лежит в папке <b>bot/</b>): кидаешь ему txt с телефона → он хранит твой профиль и отдаёт персональную ссылку <span class="mono">site/?u=…</span>, по которой сайт сразу открывается как твой. Команда <span class="mono">/add Артист - Трек [ссылка]</span> правит профиль прямо из телеграма. Никаких паролей и OAuth: только твой файл и твой chat_id.</p></div></section>`;
-  const M=ME.files[ME.cur],A=M.analysis;
-  const tabs=ME.files.map((f,i)=>`<span class="chip2" style="cursor:pointer;${i===ME.cur?'border-color:var(--yellow);color:var(--yellow)':''}" onclick="ME.cur=${i};render()">${esc(f.name)} <small>${f.tracks.length}</small></span>`).join('');
-  const segs=A.segs.map((s,i)=>`<div class="mb"><div class="l"><span style="color:#c8cede">срез ${i+1} · тьма/тепло</span><span>${s.dark} / ${s.warm}</span></div><div class="tr" style="display:flex"><div class="fl" style="width:${s.dark*4}%;background:var(--violet);color:var(--violet)"></div><div class="fl" style="width:${s.warm*4}%;background:#ffb35c;color:#ffb35c"></div></div></div>`).join('');
-  return `<div class="hero"><span class="kick" style="color:var(--cyan)">личный кабинет · посчитано в браузере</span>
-  <h1 style="color:var(--cyan)">ТВОЙ АРХИВ</h1><div class="hsub">${ACT==='cloud'?'профиль: ☁️ облако бота':ACT==='remote'?'профиль: 🌐 из ссылки':ACT&&PROFS[ACT]?'профиль: '+esc(PROFS[ACT].name):'локальная сессия'} · весь сайт сейчас работает на этих данных</div></div>
+  if(!ME||!ME.files.length)return `<div class="hero"><span class="kick" style="color:var(--cyan)">личный кабинет</span>
+  <h1 style="color:var(--cyan)">ТВОЙ АРХИВ</h1><div class="hsub">Профиль пуст: загрузи плейлист (.txt или .html) или добавь первый трек — он упадёт в полку «${MANUAL}».</div></div>
   ${switcher}
-  <div class="chips" style="justify-content:center">${tabs}<span class="chip2" style="cursor:pointer" onclick="if(confirm('удалить профиль и его правки?')){if(ACT){delete PROFS[ACT];ACT=null;saveProfs();}ME=null;D=DEMO;render()}">🗑 сбросить</span></div>
-  <div class="stats">${stat(A.n,'треков','#39f0c8')}${stat(A.artists,'артистов','#ffd23f')}${stat(A.dark+'%','тьмы','#a06bff')}${stat(A.warm+'%','тепла','#ffb35c')}${stat(A.lo+'%','замирания','#5b8def')}${stat(A.dups,'дублей','#ff5c4d')}</div>
+  <section><div class="box" style="text-align:center;padding:30px">
+  <input type="file" accept=".txt,.html,.htm,text/plain,text/html" multiple onchange="meFilesMore(this.files)" style="font-size:14px">
+  <p class="note" style="margin:12px 0 0">Каждый файл = отдельная полка.</p></div></section>`;
+  ME.tab=ME.tab||'tracks';if(ME.cur>=ME.files.length)ME.cur=Math.max(0,ME.files.length-1);
+  const M=ME.files[ME.cur],A=M.analysis||analyze(M.tracks||[]);
+  const uni=(D&&D.union)||0;
+  const segs=A.segs.map((s,i)=>`<div class="mb"><div class="l"><span style="color:#c8cede">срез ${i+1} · тьма/тепло</span><span>${s.dark} / ${s.warm}</span></div><div class="tr" style="display:flex"><div class="fl" style="width:${s.dark*4}%;background:var(--violet);color:var(--violet)"></div><div class="fl" style="width:${s.warm*4}%;background:#ffb35c;color:#ffb35c"></div></div></div>`).join('');
+  const mainTabs=`<div class="chips" style="justify-content:center">
+  <span class="chip2" style="cursor:pointer;${ME.tab==='tracks'?'border-color:var(--yellow);color:var(--yellow)':''}" onclick="ME.tab='tracks';meSave();render()">🎵 треки <small>${uni}</small></span>
+  <span class="chip2" style="cursor:pointer;${ME.tab==='pls'?'border-color:var(--cyan);color:var(--cyan)':''}" onclick="ME.tab='pls';meSave();render()">📚 плейлисты <small>${ME.files.length}</small></span>
+  <span class="chip2" style="cursor:pointer" onclick="if(confirm('удалить профиль и его правки?')){if(ACT){delete PROFS[ACT];ACT=null;saveProfs();}ME=null;D=DEMO;render()}">🗑 сбросить</span></div>`;
+  const cards=ME.files.map((f,i)=>{const FA=f.analysis||analyze(f.tracks||[]);const k='p'+i;const live=!!(D.pl&&D.pl[k]);
+    return `<div class="box" style="margin:10px 0;padding:14px;${i===ME.cur?'border-color:var(--yellow)':''}">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+    <div style="min-width:200px"><b style="font-size:16px;color:${i===ME.cur?'var(--yellow)':'var(--tx)'}">${isManual(f.name)?'❤️':'📚'} ${esc(f.name)}</b>
+    <div class="note" style="margin-top:4px">${FA.n} треков · ${FA.artists} имён · тьма ${FA.dark}% · тепло ${FA.warm}%${isManual(f.name)?' · сюда падает всё, что добавлено руками: ботом или формой на сайте':''}</div></div>
+    <div class="chips" style="margin:0">
+    ${live?`<a class="chip2" href="#/${k}">открыть полку →</a>`:`<span class="chip2" style="color:var(--dim)">полка пуста</span>`}
+    <span class="chip2" style="cursor:pointer" onclick="ME.cur=${i};meSave();render()">📊 сводка</span>
+    <span class="chip2" style="cursor:pointer" onclick="meExportIdx(${i})">⬇ txt</span>
+    ${(ME.synth&&ACT!=='cloud')?'':`<span class="chip2" style="cursor:pointer;border-color:#ff5c4d;color:#ff5c4d" onclick="meDelFile(${i})">🗑 удалить</span>`}
+    </div></div></div>`;}).join('');
+  const uploadBox=`<section><h2>📥 ЗАГРУЗИТЬ ЕЩЁ ПЛЕЙЛИСТ</h2><div class="box" style="text-align:center;padding:20px">
+  <input type="file" accept=".txt,.html,.htm,text/plain,text/html" multiple onchange="meFilesMore(this.files)" style="font-size:14px">
+  <p class="note" style="margin:10px 0 0">Принимаем <b>.txt</b> (формат «1. Артист - Трек») и <b>.html</b> — страницу плейлиста Яндекс Музыки, сохранённую из браузера («Сохранить как → Веб-страница, только HTML»): треки вытащим из встроенных данных страницы, сторонние конвертеры не нужны. Файл с таким же именем заменит старую полку.${CLOUD?' Облачный профиль обновится следом.':''}</p></div></section>`;
+  const plsTab=`${uploadBox}
+  <section><h2>📚 ТВОИ ПЛЕЙЛИСТЫ · ${ME.files.length}</h2><p class="lead">Всё, что было добавлено файлами (.txt/.html) или ботом, — отдельные полки. Ручные треки живут в полке «${MANUAL}» и в чужие плейлисты больше не сваливаются. Кнопкой «📊 сводка» выбирай полку — анализ ниже перестроится.</p>${cards}</section>
+  <div class="stats">${stat(A.n,'треков в «'+esc(M.name)+'»','#39f0c8')}${stat(A.artists,'артистов','#ffd23f')}${stat(A.dark+'%','тьмы','#a06bff')}${stat(A.warm+'%','тепла','#ffb35c')}${stat(A.lo+'%','замирания','#5b8def')}${stat(A.dups,'дублей','#ff5c4d')}</div>
   <section>${mood(A)}</section>
-  <section><h2>КТО У ТЕБЯ ЖИВЁТ</h2><div class="chips">${A.top.map(([a,c],i)=>`<span class="chip2" style="${i===0?'font-size:16px;border-color:var(--yellow)':''}">${esc(a)} <small>${c}</small></span>`).join('')}</div></section>
-  <section><h2>СРЕЗЫ ВО ВРЕМЕНИ</h2><div class="box">${segs}<p class="note">Свежие лайки слева, старые справа.</p></div></section>
-  <section><h2>ДОБАВИТЬ ТРЕК · С ПОДСКАЗКАМИ</h2><p class="lead">Начни печатать — сайт предложит артистов и треки из твоего же архива; если такого нет, будет чип «добавить как есть». В поле ссылки можно вставить <b>SoundCloud или YouTube</b> — тогда трек будет слушаться <b>целиком</b> через официальный плеер (30 секунд — только для превью без ссылки). Честно: привязать чужую библиотеку SoundCloud без аккаунта нельзя, их API закрыт для новых приложений; ссылка — легальный путь.</p>
+  <section><h2>КТО У ТЕБЯ ЖИВЁТ · «${esc(M.name)}»</h2><div class="chips">${A.top.map(([a,c],i)=>`<span class="chip2" style="${i===0?'font-size:16px;border-color:var(--yellow)':''}">${esc(a)} <small>${c}</small></span>`).join('')}</div></section>
+  <section><h2>СРЕЗЫ ВО ВРЕМЕНИ</h2><div class="box">${segs}<p class="note">Свежие лайки слева, старые справа.${A.n?'':' Полка пока пуста — добавь треки.'}</p></div></section>
+  <section><h2>РОАСТ ПО ТВОИМ ЦИФРАМ · «${esc(M.name)}»</h2><div class="box">${meRoasts({main:A}).map(x=>`<p style="margin:8px 0;font-size:14.5px">• ${x}</p>`).join('')}</div>
+  ${opin(meLetter({main:A}).replace(/<\/?p[^>]*>/g,' '),'#39f0c8')}</section>`;
+  const tracksTab=`
+  <section><h2>ДОБАВИТЬ ТРЕК · С ПОДСКАЗКАМИ</h2><p class="lead">Каждый добавленный трек падает в полку <b>«${MANUAL}»</b> — отдельно от загруженных плейлистов${CLOUD?', и улетает в облако бота':''}. Начни печатать — сайт предложит артистов и треки из твоего же архива; если такого нет, будет чип «добавить как есть». В поле ссылки можно вставить <b>SoundCloud или YouTube</b> — тогда трек будет слушаться <b>целиком</b> через официальный плеер (30 секунд — только для превью без ссылки). Честно: привязать чужую библиотеку SoundCloud без аккаунта нельзя, их API закрыт для новых приложений; ссылка — легальный путь.</p>
   ${ME.msg?`<div class="box" style="margin-bottom:12px;border-color:var(--lime)"><p class="note" style="margin:0;color:var(--lime)">${esc(ME.msg)}</p></div>`:''}
   <form class="box" onsubmit="event.preventDefault();meAdd(this)" style="display:flex;gap:10px;flex-wrap:wrap">
   <div style="flex:1;min-width:150px"><input id="ta_in" name="ta" placeholder="артист…" autocomplete="off" oninput="sugArt(this.value,'suggA')" style="width:100%;background:#221537;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px"><div class="chips" id="suggA" style="margin:6px 0 0"></div></div>
@@ -1188,13 +1289,17 @@ function meRender(){
   <input name="al" placeholder="альбом (необязательно)" style="flex:1;min-width:130px;background:#221537;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px">
   <input name="tu" placeholder="ссылка на полный трек (soundcloud / youtube / bandcamp) — необязательно" style="flex:3;min-width:220px;background:#221537;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px">
   <button class="ybtn" style="--yc:var(--lime);margin:0;cursor:pointer">＋ добавить</button>
-  <span class="ybtn" style="--yc:var(--cyan);margin:0;cursor:pointer" onclick="meExport()">⬇ скачать txt</span></form></section>
+  <span class="ybtn" style="--yc:var(--cyan);margin:0;cursor:pointer" onclick="meExport()">⬇ скачать все треки</span></form></section>
   ${meAllTracks()}
   <section><h2>🎨 ОКРАСЫ: ГДЕ НУЖНА ТВОЯ РУКА</h2><div class="box"><p class="note" style="margin:0 0 10px">Сайт красит треки словарём настроения. Что не смог раскрасить — честно оставляет бесцветным («без яркой окраски») и просит помощи у погреба. Голоса считаются только от реальных людей, у которых трек лежит в своём архиве; пустота значит «никто ещё не голосовал», а не ноль.</p>
   <span class="ybtn" style="--yc:var(--pink);cursor:pointer;margin:0" onclick="openInkModal()">🎨 треки без окраса · помочь голосом</span></div></section>
   ${meDigest()}
-  <section><h2>РОАСТ ПО ТВОИМ ЦИФРАМ</h2><div class="box">${meRoasts({main:A}).map(x=>`<p style="margin:8px 0;font-size:14.5px">• ${x}</p>`).join('')}</div>
-  ${opin(meLetter({main:A}).replace(/<\/?p[^>]*>/g,' '),'#39f0c8')}</section>
+  `;
+  return `<div class="hero"><span class="kick" style="color:var(--cyan)">личный кабинет · посчитано в браузере</span>
+  <h1 style="color:var(--cyan)">ТВОЙ АРХИВ</h1><div class="hsub">${ACT==='cloud'?'профиль: ☁️ облако бота':ACT==='remote'?'профиль: 🌐 из ссылки':ACT&&PROFS[ACT]?'профиль: '+esc(PROFS[ACT].name):'локальная сессия'} · треки и плейлисты разложены по вкладкам</div></div>
+  ${switcher}
+  ${mainTabs}
+  ${ME.tab==='pls'?plsTab:tracksTab}
   <div class="pn"><a href="#/" style="color:var(--yellow)">← ОТКРЫТЬ САЙТ КАК СВОЙ<small>главная уже твоя</small></a></div>`;
 }
 
@@ -1225,6 +1330,8 @@ const TAGS={'тьма':'смерт умр могил пепел мрак тьм 
 'абсурд и ирония':'мама маму бассбуст глухонемых картоф повар танцуй дурак чудо странн'.split(' ')};
 function tags_of(t){const tl=t.toLowerCase();return Object.keys(TAGS).filter(k=>TAGS[k].some(w=>tl.includes(w)));}
 function buildProfile(files,urls,extra){
+  files=files||[];
+  if(!files.length)return {pl:{},keys:[],M:[],core:[],tracks:[],artists:{},seg:[],years:[],ny:[],quiz:[],gpool:{},cov:{},copy:{},url:{},urls:urls||{},art:(extra||{}).art||{},albums:(extra||{}).albums||{},locker:(extra||{}).locker||{},bot:(extra||{}).bot||'pogrebok_room_bot',ykey:null,total:0,union:0,ach:[]};
   const keys=files.map((f,i)=>'p'+i);
   const SETS={};keys.forEach((k,i)=>SETS[k]=new Set(files[i].tracks.map(([a,t])=>a.toLowerCase()+'||'+t.toLowerCase())));
   const yi=files.findIndex(f=>/нравится|likes|like/i.test(f.name));const yf=files[yi<0?0:yi];
@@ -1233,7 +1340,7 @@ function buildProfile(files,urls,extra){
   keys.forEach((k,i)=>{
     const f=files[i],A=analyze(f.tracks);
     const scored=f.tracks.map(([a,t])=>[t,a,tags_of(t).length+(t===t.toLowerCase()?0.5:0)]).sort((x,y)=>y[2]-x[2]);
-    pl[k]=Object.assign({},A,{name:f.name,emoji:PE[i%8],color:PC[i%8],url:'',cov:null,
+    pl[k]=Object.assign({},A,{name:f.name,emoji:isManual(f.name)?'❤️':PE[i%8],color:isManual(f.name)?'#ff3d81':PC[i%8],url:'',cov:null,
       inlikes:i===(yi<0?0:yi)?100:Math.round(100*[...SETS[k]].filter(x=>yset.has(x)).length/(SETS[k].size||1)),
       quotes:scored.slice(0,12).map(([t,a])=>t+' — '+a),
       tracks:f.tracks});
@@ -1280,7 +1387,7 @@ function buildProfile(files,urls,extra){
   const copy={};keys.forEach(k=>{const p=pl[k];
     copy[k]={tag:`${p.n} треков · ${p.artists} имён · посчитано в твоём браузере`,
       desc:`Собрано из файла «${p.name}»: ${p.n} треков, ${p.artists} имён, ${p.dups} дублей. Тьмы ${p.dark}%, тепла ${p.warm}% — ${p.dark>p.warm?'ночной режим':'тёплый режим'}.`,
-      opinion:`Топ-голос этого плейлиста — <b>${esc(p.top1[0])}</b> (${p.top1[1]} треков). ${p.dark>p.warm+2?'Тьмы заметно больше тепла: сюда приходят не греться, а переживать.':p.warm>p.dark+2?'Тепла заметно больше тьмы: это полка, где тебя обнимают.':'Тьма и тепло в равновесии: фирменный режим погреба.'} ${p.low>50?'Половина названий с маленькой буквы: чувства шёпотом — твой почерк.':'Названия с большой: ты всё ещё веришь в заглавные буквы.'}`,
+      opinion:`Топ-голос этого плейлиста — <b>${esc((p.top1||['—',0])[0])}</b> (${(p.top1||['—',0])[1]} треков). ${p.dark>p.warm+2?'Тьмы заметно больше тепла: сюда приходят не греться, а переживать.':p.warm>p.dark+2?'Тепла заметно больше тьмы: это полка, где тебя обнимают.':'Тьма и тепло в равновесии: фирменный режим погреба.'} ${p.low>50?'Половина названий с маленькой буквы: чувства шёпотом — твой почерк.':'Названия с большой: ты всё ещё веришь в заглавные буквы.'}`,
       extra:'Плейлист добавлен через сайт: правки, сводка и обложки живут локально в твоём браузере.'};});
   const union=new Set();keys.forEach(k=>SETS[k].forEach(x=>union.add(x)));
   tracks.forEach(tr=>{tr.inY=yset.has(tr.a.toLowerCase()+'||'+tr.t.toLowerCase());});
