@@ -143,8 +143,12 @@ token, бесплатно) — сервер сможет обогащать ка
 3. Worker → Settings → **Variables and Secrets**:
    secret `TG_TOKEN` = токен BotFather; переменные `BOT_USER=pogrebok_room_bot`,
    `SITE=https://chmoshnik187.github.io/pogrebok`, опционально `GENIUS`.
-4. Workers & Pages → **KV** → Create namespace `pogreb`; затем Worker → Settings →
-   **Bindings** → Add: variable `POGREB` → namespace `pogreb` → Save.
+4. Слева **Storage & databases → Workers KV** → **Create instance**, имя `pogreb` →
+   Create (имя неймспейса — просто этикетка). Затем Compute → Workers & Pages →
+   воркер `pogrebok` → вкладка **Bindings** (или Settings → Variables and Secrets,
+   блок Bindings) → **Add binding** → тип **KV namespace** → Variable name:
+   `POGREB` (именно так, код читает env.POGREB) → в списке выбрать `pogreb` →
+   **Add binding**; воркер задеплоится сам.
 5. Скинь автору погреба URL вида `https://pogrebok.<sub>.workers.dev` —
    он пропишет вебхук (`/tg`) со своей стороны и проверит /api/ping.
    Домашний bot.py при этом не запускай: вебхук и getUpdates конфликтуют (409).
