@@ -123,7 +123,8 @@ footer:before{content:'';position:absolute;top:0;left:0;right:0;height:1px;backg
 .fdon .hp{animation:hp 1.6s infinite}
 @keyframes hp{0%,100%{transform:scale(1)}12%{transform:scale(1.28)}24%{transform:scale(1)}}
 .flinks{display:flex;flex-wrap:wrap;gap:4px 10px}
-.flinks .fl2{display:inline;font-size:12px;padding:0}
+.flinks .fl2{display:inline;font-size:12px;padding:0;color:var(--mut);text-decoration:none;border-bottom:1px dashed transparent;transition:.15s}
+.flinks .fl2:hover{color:var(--pink);border-bottom-color:var(--pink)}
 .fjunk{font-size:11.5px;line-height:2;color:var(--dim)}
 .fjunk .fl2{font-size:11.5px;padding:0;color:var(--dim)}
 .ftgrid{display:none}
@@ -245,6 +246,12 @@ const ROUTES=['hub','likes','dusha','bas','cheto','dusha2','bas2','hz','arcade',
 const NAME={hub:'ГЛАВНАЯ',likes:'МНЕ НРАВИТСЯ',dusha:'ДУША',bas:'БАС',cheto:'ЧЕТО',dusha2:'ДУША 2',bas2:'БАС 2',hz:'ХЗ',game:'ИГРА',arcade:'АРКАДА',artifacts:'АРТЕФАКТЫ',map:'КАРТА СЦЕНЫ',me:'ТВОЙ АРХИВ'};
 const EMO={hub:'🏠',likes:'💜',dusha:'🕯',bas:'🔊',cheto:'🌀',dusha2:'🌱',bas2:'💥',hz:'❓',game:'🎮',arcade:'🕹',artifacts:'🧿',map:'✨',me:'📥'};
 const COL={hub:'#39f0c8',likes:'#ff3d81',dusha:'#ffb35c',bas:'#ff5c4d',cheto:'#b8f04a',dusha2:'#8fe388',bas2:'#ff8a3d',hz:'#a06bff',game:'#ffd23f',arcade:'#ff8a3d',artifacts:'#7ab8ff',map:'#a06bff',me:'#39f0c8'};
+/* динамическая навигация: полки берутся из активного профиля, а не пришиты нитками */
+const APPR=['arcade','artifacts','map','game','me'];
+function nm(k){return NAME[k]||(D.pl[k]?D.pl[k].name:k);}
+function em(k){return EMO[k]||(D.pl[k]?D.pl[k].emoji:'🎧');}
+function cl(k){return COL[k]||(D.pl[k]?D.pl[k].color:'#39f0c8');}
+function isShelf(k){return !!D.pl[k];}
 const ACOL=['#ff3d81','#39f0c8','#ffd23f','#a06bff','#ff5c4d','#5b8def','#b8f04a','#ff7ab8','#8fe388','#ff8a3d','#7ab8ff','#e86bff'];
 /* мои субъективные шкалы по плейлистам: нежность / злость / ирония / эскапизм / надрыв */
 const VERDICT={
@@ -278,13 +285,15 @@ function toggleDrawer(){$('#drawer').classList.toggle('open');$('#scrim').classL
 function toggleCorner(){$('#cmenu').classList.toggle('open');$('#drawer').classList.remove('open');$('#scrim').classList.remove('on');renderCorner();}
 function dnav(){
   const cur=route().page;
-  const links=ROUTES.map(r=>`<a style="color:${COL[r]}" href="#/${r==='hub'?'':r}" onclick="toggleDrawer()">${EMO[r]} ${NAME[r]}<small>${r==='hub'?'коллаж':r==='me'?'загрузить своё':' '}</small></a>`).join('');
+  const shelves=['hub',...D.keys];
+  const links=shelves.map(r=>`<a style="color:${cl(r)}" href="#/${r==='hub'?'':r}" onclick="toggleDrawer()">${em(r)} ${esc(nm(r))}<small>${r==='hub'?'коллаж':(D.pl[r]?D.pl[r].n+' треков':' ')}</small></a>`).join('');
+  const plays=APPR.filter(r=>r!=='me').map(r=>`<a style="color:${cl(r)}" href="#/${r}" onclick="toggleDrawer()">${em(r)} ${nm(r)}<small> </small></a>`).join('');
   const tops=Object.entries(D.artists).sort((a,b)=>b[1].total-a[1].total).slice(0,6)
     .map(([sl,a])=>`<a style="color:var(--mut);font-size:15px;font-weight:700" href="#/artist/${sl}" onclick="toggleDrawer()">♪ ${esc(a.name)}<small>${a.total}</small></a>`).join('');
   $('#dnav').innerHTML=`<div style="margin:2px 0 12px"><input id="q" placeholder="поиск: трек или артист…  ( / )" oninput="qSearch(this.value)" autocomplete="off" style="width:100%;background:#221537;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:9px;font-size:14px"><div id="qres" style="margin:8px 0 0;display:flex;flex-direction:column;gap:6px"></div></div>
   <div style="font-weight:900;font-size:22px;letter-spacing:-1px;background:linear-gradient(92deg,var(--pink),var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">ПОГРЕБОК</div>
   <div class="dhead">${ACT==='cloud'?'☁️ ОБЛАКО БОТА (фоновый sync)':ACT==='remote'?'🌐 ПРОФИЛЬ ИЗ ОБЛАКА':ACT&&PROFS[ACT]?'👤 ПРОФИЛЬ: '+esc(PROFS[ACT].name):CLOUD&&CLOUD_ERR?'☁️ ОБЛАКО НЕ ОТВЕЧАЕТ':CLOUD?'⏳ ГРУЗУ КОМНАТУ ИЗ ОБЛАКА…':DEMO.keys.length?'🎭 ДЕМО-РЕЖИМ АВТОРА':'📭 ПУСТОЙ ПОГРЕБ · СКЕЛЕТ'}</div>
-  <div class="dhead">ПОЛКИ</div>${links}<div class="dhead">БЫСТРЫЙ ВХОД · АРТИСТЫ</div>${tops}
+  <div class="dhead">ПОЛКИ</div>${links}<div class="dhead">ИГРАТЬ И ТРОГАТЬ</div>${plays}<div class="dhead">БЫСТРЫЙ ВХОД · АРТИСТЫ</div>${tops}
   <div class="dhead">КАБИНЕТ</div><a style="color:var(--cyan)" href="#/me" onclick="toggleDrawer()">📥 ТВОЙ АРХИВ<small>загрузить txt</small></a>`;
 }
 function renderCorner(){
@@ -384,18 +393,18 @@ function hub(){
     return `<a class="pcard" style="--pc:${p.color}" href="#/${k}"><div class="cover">${plCover(k)}<span class="badge">${p.emoji} ${p.n} треков</span></div><h3>${p.name}</h3><div class="tag">${esc(D.copy[k].tag)}</div>
     <div class="num">тьма ${p.dark}% / тепло ${p.warm}% · ${p.artists} артистов</div></a>`;}).join('');
   const got=ACH2.filter(a=>a[3]()).length;
-  const vc=[...VIS].filter(v=>ROUTES.includes(v)).length;
+  const vc=[...VIS].filter(v=>ROUTES.includes(v)||isShelf(v)).length;void vc;
   return `<div class="hero"><span class="kick" style="color:var(--cyan)">погреб одного слуха · 2015–2026 · всё кликабельно</span>
   <h1 style="background:linear-gradient(92deg,var(--pink),var(--violet) 45%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">ПОГРЕБОК</h1>
   <div class="tick"><div class="tk">${(()=>{const t=D.tracks.slice(0,40).map(x=>`<b>${esc(x.t)}</b><i>✦</i>${esc(x.a)}<i>·</i>`).join('');return t+t;})()}</div></div>
   <div class="hsub">Не список, а погреб: ниже — коллаж из твоих самых слушаемых голосов, где размер плитки = сила привязанности. Клик по плитке — страница артиста. Меню полок — слева внизу (☰), эпохи и кабинет — справа вверху (🎨).</div></div>
   <section><h2>ТВОИ ГОЛОСА</h2><p class="lead">Десять плиток = десять самых тяжёлых привязанностей архива. Цвет плитки выводится из настроения их треков у тебя: красный — напор, синий — замирание, бирюза — тепло, янтарь — свет.</p>
   ${mosaic(tops)}
-  <div class="chips" style="justify-content:center">${stat(D.total,'лайк-событий','#ff3d81')}${stat(D.union,'уникальных треков','#39f0c8')}${stat(169,'в ядре','#a06bff')}${stat('7','масок','#ffd23f')}</div></section>
+  <div class="chips" style="justify-content:center">${stat(D.total,'лайк-событий','#ff3d81')}${stat(D.union,'уникальных треков','#39f0c8')}${stat(D.core.length,'в ядре','#a06bff')}${stat(D.keys.length,'масок','#ffd23f')}</div></section>
   
   ${tdCard()}
   ${dailyShelf()}
-  <section><h2>🎧 ВСЕЛЕННАЯ · МУЗЫКА</h2><p class="lead">Семь масок одного слуха. Внутри: статистика, мои шкалы, кликабельные артисты и стена цитат, где каждая цитата — разбор трека с обложкой.</p><div class="grid">${cards}</div></section>
+  <section><h2>🎧 ВСЕЛЕННАЯ · МУЗЫКА</h2><p class="lead">${D.keys.length} масок одного слуха. Внутри: статистика, мои шкалы, кликабельные артисты и стена цитат, где каждая цитата — разбор трека с обложкой.</p><div class="grid">${cards}</div></section>
   <section><h2>🕹 ВСЕЛЕННАЯ · ИГРАТЬ И ТРОГАТЬ</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
   <a class="pcard" style="--pc:var(--yellow)" href="#/arcade"><span style="font-size:28px">🎰⏱</span><h3>АРКАДА</h3><div class="tag">слот-машина настроения, баттл масок, машина времени</div></a>
   <a class="pcard" style="--pc:var(--yellow)" href="#/game"><span style="font-size:28px">🎧🎮</span><h3>ИГРА</h3><div class="tag">15-секундные вырезки из выбранного плейлиста + режим масок</div></a>
@@ -403,11 +412,11 @@ function hub(){
   <a class="pcard" style="--pc:#7ab8ff" href="#/artifacts"><span style="font-size:28px">💌🎫</span><h3>АРТЕФАКТЫ</h3><div class="tag">письмо себе (всякий раз новое), винил, год в числах</div></a>
   <a class="pcard" style="--pc:var(--cyan)" href="#/me"><span style="font-size:28px">📥</span><h3>ТВОЙ АРХИВ</h3><div class="tag">загрузи свои txt — сайт посчитает то же самое про тебя</div></a></div></section>
   <section><h2>🗺 КАК ЭТО УСТРОЕНО</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
-  <div class="box"><h3 style="margin:0 0 8px;font-size:15px">КАРТА ПЕРЕСЕЧЕНИЙ</h3><div style="overflow-x:auto">${matrix()}</div><p class="note"><b>ДУША × БАС = 15</b>: два разных человека в одном аккаунте.</p></div>
-  <div class="box"><h3 style="margin:0 0 8px;font-size:15px">ЯДРО: ТЫ БЕЗ МАСОК</h3><div class="chips">${D.core.slice(0,8).map(([t,a,c])=>{const i=D.tracks.findIndex(x=>x.t.toLowerCase()===t.toLowerCase());return i>=0?`<a class="chip2" href="#/track/${i}">${esc(t)} <small>×${c}</small></a>`:`<span class="chip2">${esc(t)} <small>×${c}</small></span>`;}).join('')}</div><p class="note">169 треков живут в трёх и более плейлистах.</p></div></div></section>
+  <div class="box"><h3 style="margin:0 0 8px;font-size:15px">КАРТА ПЕРЕСЕЧЕНИЙ</h3><div style="overflow-x:auto">${matrix()}</div><p class="note">${(()=>{let bi=0,bj=1,bv=-1;for(let i=0;i<D.keys.length;i++)for(let j=i+1;j<D.keys.length;j++)if((D.M[i]||[])[j]>bv){bv=D.M[i][j];bi=i;bj=j;}return D.keys.length>1?`<b>${esc(nm(D.keys[bi]))} × ${esc(nm(D.keys[bj]))} = ${bv}</b>: самое жирное пересечение полок — два разных человека в одном аккаунте.`:'пока одна полка: пересекаться не с кем, но это пока.';})()}</p></div>
+  <div class="box"><h3 style="margin:0 0 8px;font-size:15px">ЯДРО: ТЫ БЕЗ МАСОК</h3><div class="chips">${D.core.slice(0,8).map(([t,a,c])=>{const i=D.tracks.findIndex(x=>x.t.toLowerCase()===t.toLowerCase());return i>=0?`<a class="chip2" href="#/track/${i}">${esc(t)} <small>×${c}</small></a>`:`<span class="chip2">${esc(t)} <small>×${c}</small></span>`;}).join('')}</div><p class="note">${D.core.length} треков живут в нескольких плейлистах сразу — это ядро без масок.</p></div></div></section>
   <section><h2>АЧИВКИ</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"><div class="box"><h3 style="margin:0 0 8px;font-size:15px">КОЛЛЕКЦИИ</h3><div class="ach">${D.ach.map(([e,t,x])=>`<div class="a got"><span class="em">${e}</span><b>${t}</b><span>${x}</span></div>`).join('')}</div></div>
   <div class="box"><h3 style="margin:0 0 8px;font-size:15px">САЙТА · ${got}/${ACH2.length}</h3><div class="prog"><div class="fl" style="width:${100*got/ACH2.length}%"></div></div>${achBox()}</div></div></section>
-  ${opin('7 377 лайк-событий, 5 412 уникальных трека, 2 415 имён. Это не коллекция, это <b>автопортрет в формате плейлиста</b>: погреб, где ты живёшь в 3:56. Сайт — попытка показать тебе этот погреб со стороны, с выключенным светом и включённым неоновым.',COL.hub)}
+  ${opin(`${D.total} лайк-событий, ${D.union} уникальных треков. Это не коллекция, это <b>автопортрет в формате плейлиста</b>: погреб, где ты живёшь в 3:56. Сайт — попытка показать тебе этот погреб со стороны, с выключенным светом и включённым неоновым.`,COL.hub)}
 `;
 }
 /* ---------- страница плейлиста ---------- */
@@ -415,22 +424,29 @@ function page(k){
   const p=D.pl[k],c=D.copy[k];
   let h=`<div class="hero"><span class="kick" style="color:${p.color}">плейлист · ${p.n} треков · ${p.artists} артистов</span>
   <h1 style="color:${p.color};text-shadow:0 0 34px ${p.color}55">${p.emoji} ${p.name}</h1><div class="hsub">${esc(c.tag)}</div></div>
-  <div class="stats">${stat(p.n,'треков',p.color)}${stat(p.artists,'артистов','#39f0c8')}${stat(p.dark+'%','тьмы','#a06bff')}${stat(p.warm+'%','тепла','#ffb35c')}${k==='likes'?stat(p.top[0][1],'треков у лидера','#ffd23f'):stat(p.inlikes+'%','уже было в лайках','#b8f04a')}${stat(p.dups,'дублей','#ff5c4d')}</div>
+  <div class="stats">${stat(p.n,'треков',p.color)}${stat(p.artists,'артистов','#39f0c8')}${stat(p.dark+'%','тьмы','#a06bff')}${stat(p.warm+'%','тепла','#ffb35c')}${k===D.keys[0]?stat(p.top[0][1],'треков у лидера','#ffd23f'):stat(p.inlikes+'%','уже было в лайках','#b8f04a')}${stat(p.dups,'дублей','#ff5c4d')}</div>
   <div class="covrow"><div class="cover" style="cursor:pointer" onclick="openCovEditor('${k}')" title="нажми, чтобы сменить обложку">${plCover(k)}<span class="badge">🖼 редактор: шаблоны / авто / своя</span></div>
   <div><p style="margin:0;font-size:15px">${esc(c.desc)}</p>
   <span class="ybtn" style="--yc:${p.color};cursor:pointer;margin-top:10px" onclick="covAuto('${k}')">✨ автообложка по сути</span>${D.url&&D.url[k]?`<a class="ybtn" style="--yc:${p.color}" href="${D.url[k]}" target="_blank" rel="noopener">▶&nbsp; открыть на Яндекс Музыке&nbsp;↗</a>
-  <span class="ybtn" style="--yc:var(--lime);cursor:pointer" onclick="pqMask('${k}')">🎧 слушать маску · 30 сек</span>`:`<span class="ybtn" style="--yc:${p.color};cursor:default">📁 локальный плейлист</span>`}
+  <span class="ybtn" style="--yc:var(--lime);cursor:pointer" onclick="pqMask('${k}')">🎧 слушать маску · 30 сек</span>`:`<span class="ybtn" style="--yc:${p.color};cursor:default">${ACT==='cloud'?'☁️ полка из облака бота':'📁 локальный плейлист'}</span>`}
   <span class="ybtn" style="--yc:var(--lime);cursor:pointer" onclick="pqMask('${k}')">▶ слушать маску · 30 сек</span></div></div>
   <section>${mood(p)}</section>${verdict(k)}
   <section><h2>КТО ТУТ ЖИВЁТ</h2><p class="lead">Чипы артистов кликабельны: открывают страницу артиста с разбором.</p>${topchips(p)}</section>`;
   if(p.quotes)h+=`<section><h2>СТЕНА ЦИТАТ</h2><p class="lead">Карточки кликабельны: внутри — что трек приносит в плейлист и что он значит сам по себе.</p>${wall(p.quotes,p.color,true)}</section>`;
-  if(p.tracks)h+=`<section><h2>ПОЛНЫЙ ТРЕКЛИСТ</h2><div class="box tl">${p.tracks.map(([a,t],i)=>{const idx=D.tracks.findIndex(x=>x.t.toLowerCase()===t.toLowerCase()&&x.a.toLowerCase()===a.toLowerCase());
-    return `<div class="t"><b>${i+1}</b><div>${idx>=0?`<a href="#/track/${idx}" style="color:var(--tx)">${esc(t)}</a>`:esc(t)} <i>— ${esc(a)}</i></div></div>`;}).join('')}</div></section>`;
+  const TL=p.tracks||[];
+  h+=`<section><h2>ПОЛНЫЙ ТРЕКЛИСТ · ${TL.length}</h2><p class="lead">Все треки полки по порядку экспорта. Кликабельные — те, что попали в разбор и страницу трека.</p><div class="box tl" id="tlbox">${tlRows(k,0,150)}</div>${TL.length>150?`<span class="ybtn" id="tlbtn" style="--yc:${p.color};cursor:pointer;margin-top:10px" onclick="tlMore('${k}')">показать ещё · скрыто ${TL.length-150}</span>`:''}</section>`;
   h+=`<section>${opin(c.opinion,p.color)}<div class="box"><p class="note" style="margin:0">📎 ${esc(c.extra)}</p></div>${noteBox((ACT||'demo')+':pl:'+k,'МОЯ ЗАМЕТКА К МАСКЕ «'+p.name+'»')}</section>`;
-  const i=ROUTES.indexOf(k),prev=ROUTES[i-1],next=ROUTES[i+1];
-  h+=`<div class="pn">${prev?`<a href="#/${prev==='hub'?'':prev}" style="color:${COL[prev]}">← ${NAME[prev]}<small>назад</small></a>`:'<span></span>'}${next?`<a href="#/${next}" style="color:${COL[next]};text-align:right">${NAME[next]} →<small>дальше</small></a>`:`<a href="#/" style="color:var(--cyan);text-align:right">НА ГЛАВНУЮ<small>в конец</small></a>`}</div>`;
+  const chain=['hub',...D.keys];const i=chain.indexOf(k),prev=chain[i-1],next=chain[i+1];
+  h+=`<div class="pn">${prev?`<a href="#/${prev==='hub'?'':prev}" style="color:${cl(prev)}">← ${esc(nm(prev))}<small>назад</small></a>`:'<span></span>'}${next?`<a href="#/${next}" style="color:${cl(next)};text-align:right">${esc(nm(next))} →<small>дальше</small></a>`:`<a href="#/" style="color:var(--cyan);text-align:right">НА ГЛАВНУЮ<small>в конец</small></a>`}</div>`;
   return h;
 }
+/* треклист полки: рендер порциями, чтобы 5000 треков не уронили телефон */
+function tlmap(){if(!window.__tlmap||window.__tlfor!==D){window.__tlmap=new Map(D.tracks.map((x,i)=>[x.a.toLowerCase()+'||'+x.t.toLowerCase(),i]));window.__tlfor=D;}return window.__tlmap;}
+function tlRows(k,from,to){const M=tlmap();return (D.pl[k].tracks||[]).slice(from,to).map(([a,t],j)=>{const i=from+j;const idx=M.get(a.toLowerCase()+'||'+t.toLowerCase());
+  return `<div class="t"><b>${i+1}</b><div>${idx!==undefined?`<a href="#/track/${idx}" style="color:var(--tx)">${esc(t)}</a>`:(esc(t)||'—')} <i>— ${esc(a)}</i></div></div>`;}).join('');}
+function tlMore(k){const box=$('#tlbox');if(!box)return;const TL=D.pl[k].tracks||[];const from=box.children.length,to=Math.min(TL.length,from+500);
+  box.insertAdjacentHTML('beforeend',tlRows(k,from,to));
+  const b=$('#tlbtn');if(b){if(to>=TL.length)b.remove();else b.textContent=`показать ещё · скрыто ${TL.length-to}`;}}
 /* ---------- страница артиста ---------- */
 function artistPage(slug){
   const a=D.artists[slug];if(!a)return hub();
@@ -758,7 +774,7 @@ function footerInfo(k){
   openModal(icon,t,`<p>${x}</p>${extra}`,`<span class="ybtn" style="--yc:var(--lime);cursor:pointer;margin:0" onclick="closeModal()">понятно</span>${k==='cookies'?`<span class="ybtn" style="--yc:var(--red);cursor:pointer;margin:0" onclick="closeModal();location.hash='#/me'">к сбросу</span>`:''}`);
 }
 function FOOTER(){
-  const links=ROUTES.map(r=>`<a class="fl2" href="#/${r==='hub'?'':r}">${EMO[r]} ${NAME[r]}</a>`).join(' ');
+  const links=['hub',...D.keys,...APPR].map(r=>`<a class="fl2" style="color:${cl(r)}" href="#/${r==='hub'?'':r}">${em(r)} ${esc(nm(r))}</a>`).join(' ');
   const junk=['privacy','terms','cookies','jobs','press','status','log'].map(k=>`<a class="fl2" style="cursor:pointer;display:inline" onclick="footerInfo('${k}')">${{privacy:'конфиденциальность',terms:'условия',cookies:'cookies',jobs:'вакансии',press:'пресс-кит',status:'статус',log:'чейнджлог'}[k]}</a>`).join(' · ');
   return `<footer><div class="frow">
   <div class="fbrand"><span class="ftbrand">ПОГРЕБОК</span><span class="fver">v${VER} · сделано в 3:56</span>
@@ -791,7 +807,7 @@ function render(){
     else if(r.page==='map')html=map();
         else if(r.page==='me')html=meRender();
     else if(!D.keys.length&&r.page!=='me')html=meRender();
-    else html=ROUTES.includes(r.page)?page(r.page):hub();
+    else html=(ROUTES.includes(r.page)||isShelf(r.page))?page(r.page):hub();
     app.innerHTML=html+FOOTER();
     window.scrollTo({top:0,behavior:'instant'});
     app.classList.remove('out');
@@ -1154,9 +1170,10 @@ function buildProfile(files,urls,extra){
   keys.forEach((k,i)=>{
     const f=files[i],A=analyze(f.tracks);
     const scored=f.tracks.map(([a,t])=>[t,a,tags_of(t).length+(t===t.toLowerCase()?0.5:0)]).sort((x,y)=>y[2]-x[2]);
-    pl[k]=Object.assign({},A,{name:f.name,emoji:PE[i%8],color:PC[i%8],inlikes:100,url:'',cov:null,
+    pl[k]=Object.assign({},A,{name:f.name,emoji:PE[i%8],color:PC[i%8],url:'',cov:null,
+      inlikes:i===(yi<0?0:yi)?100:Math.round(100*[...SETS[k]].filter(x=>yset.has(x)).length/(SETS[k].size||1)),
       quotes:scored.slice(0,12).map(([t,a])=>t+' — '+a),
-      tracks:f.tracks.length<=15?f.tracks:null});
+      tracks:f.tracks});
   });
   const arts={};
   keys.forEach((k,i)=>files[i].tracks.forEach(([a,t],pos)=>{
