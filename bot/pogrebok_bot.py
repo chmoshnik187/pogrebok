@@ -14,10 +14,14 @@
 
 КОМАНДЫ:
   /start          hello
+  /help           справочник: что делает каждая команда
   /my             твоя персональная ссылка на сайт
+  /list           список полок; /list ИМЯ|N — треклист полки постранично
   /add Артист - Трек [ссылка]   добавить трек в первый плейлист профиля
   /del N          удалить N-й трек первого плейлиста
   /stats          короткая сводка профиля
+  /find Артист - Трек   где трек играет (Apple/Deezer + поиски)
+  /locker, /play SLUG   твой локер mp3 и прослушивание
   просто файлом   прислать .txt экспорта -> создаст/перезапишет профиль
 """
 import os, re, json, time, pathlib, base64, hashlib, urllib.parse, urllib.request
@@ -151,6 +155,36 @@ def locker_slug(a,t):
 def norm_ru(s):
     return re.sub(r'[^a-zа-я0-9 ]', '', (s or '').lower()).strip()
 
+def esc(s):
+    return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+MENU_CMDS = [
+    {'command': 'start', 'description': 'знакомство с погребком'},
+    {'command': 'help', 'description': 'что делает каждая команда'},
+    {'command': 'my', 'description': 'ссылка на мою комнату сайта'},
+    {'command': 'stats', 'description': 'сводка: полки, треки, имена'},
+    {'command': 'list', 'description': 'полки и их треки постранично'},
+    {'command': 'add', 'description': 'добавить трек: /add Артист - Трек'},
+    {'command': 'del', 'description': 'удалить трек по номеру из 1-й полки'},
+    {'command': 'find', 'description': 'где играет трек: Apple/Deezer/поиск'},
+    {'command': 'locker', 'description': 'мой локер mp3'},
+    {'command': 'play', 'description': 'слушать трек из локера'},
+]
+HELP = """<b>ПОГРЕБОК · справочник команд</b>
+/my — ссылка на твою комнату сайта, собранную из твоих же полок.
+/stats — сводка профиля: сколько полок, треков и имён живёт у бота.
+/list — список полок с числом треков.
+/list ИМЯ или /list 1 — треклист полки по 60 треков; страницы: /list ИМЯ 2, /list ИМЯ 3…
+/add Артист - Трек [ссылка] — вручную вкатить трек в первую полку; обложка подтянется из Apple Music, ссылка — для полного прослушивания на сайте.
+/add! Артист - Трек — то же, но силой: даже если трек уже есть (дубли бывают искусством).
+/del N — удалить N-й трек первой полки (нумерация с 1, как в /list 1).
+/find Артист - Трек — проверка, где трек вообще играет: Apple Music, Deezer + ссылки на поиск в Яндексе, Spotify, YouTube, SoundCloud, Bandcamp.
+/locker — список твоих mp3, загруженных файлом.
+/play SLUG — слушать трек из локера (slug виден в /locker).
+/help — этот список, вдруг ты забыл, кто ты.
+Файлом .txt — загрузить или перезаписать полку (формат экспорта Яндекса: «1. Артист - Трек»).
+Файлом .mp3 — положить трек в локер, чтобы стримить его себе из облака."""
+
 def send_audio(chat, fid):
     req = urllib.request.Request(API+'/sendAudio', data=json.dumps({'chat_id':chat,'audio':fid}).encode(),
                                  headers={'Content-Type':'application/json'})
@@ -207,9 +241,48 @@ def handle(msg):
             else:
                 send(chat, 'Не нашёл такой трек в твоём локере. Пришли mp3 файлом — положу.')
             return
+        prof = load(chat)
+        if not prof.get('menu'):
+            prof['menu'] = 1
+            save(chat, prof)
+            try:
+                requests.post(API + '/setMyCommands', json={'commands': MENU_CMDS}, timeout=20)
+            except Exception:
+                pass
         send(chat, 'Я — погребок. Кидай .txt экспорта плейлистов — соберу комнату.\n'
                    'Кидай mp3 файлом — положу в локер и буду стримить тебе в телеграме.\n'
-                   'Команды: /my /stats /add /del /locker /play SLUG')
+                   'Команды: /my /stats /list /add /del /locker /play SLUG\n'
+                   'Справочник по каждой: /help')
+    elif text.startswith('/help'):
+        send(chat, HELP)
+    elif text.startswith('/list'):
+        prof = load(chat)
+        if not prof['files']:
+            send(chat, 'Профиль пуст. Пришли .txt экспорт — и станет, что листать.')
+            return
+        arg = text[5:].strip()
+        if not arg:
+            send(chat, 'Твои полки:\n' + '\n'.join(
+                f'· {i + 1}. <b>{esc(f["name"])}</b> — {len(f["tracks"])} треков · посмотреть: /list {i + 1}'
+                for i, f in enumerate(prof['files'])) + '\n\nТреклист полки: /list ИМЯ или номер. Страницы: /list ИМЯ 2')
+            return
+        m = re.match(r'^(.+?)(?:\s+(\d+))?$', arg)
+        name = m.group(1)
+        pn = max(1, int(m.group(2) or 1))
+        idx = int(name) - 1 if name.isdigit() else next((i for i, f in enumerate(prof['files']) if f['name'].lower() == name.lower()), -1)
+        if idx < 0:
+            idx = next((i for i, f in enumerate(prof['files']) if name.lower() in f['name'].lower()), -1)
+        if not (0 <= idx < len(prof['files'])):
+            send(chat, 'Не нашёл такую полку. Список полок: /list')
+            return
+        f = prof['files'][idx]
+        PER, total = 60, len(f['tracks'])
+        pages = max(1, -(-total // PER))
+        pn = min(pn, pages)
+        rows = '\n'.join(f'{(pn - 1) * PER + i + 1}. {esc(a)} — {esc(t)}'
+                         for i, (a, t) in enumerate(f['tracks'][(pn - 1) * PER:pn * PER]))
+        tail = f'дальше: /list {idx + 1} {pn + 1}' if pn < pages else 'это всё было. добавляй ещё: /add Артист - Трек'
+        send(chat, f'<b>{esc(f["name"])}</b> · стр. {pn}/{pages} · всего {total}\n{rows}\n{tail}')
     elif text.startswith('/my'):
         link = site_link(chat)
         send(chat, link or 'Профиль есть, но публичной ссылки нет: задай POGREBOK_GH_REPO и POGREBOK_SITE.')
@@ -311,7 +384,7 @@ def handle(msg):
         else:
             send(chat, 'Нет такого номера.')
     else:
-        send(chat, 'Не понял. Команды: /my /stats /add /del или просто пришли .txt файл.')
+        send(chat, 'Не понял. Полный справочник: /help · список полок: /list · или просто пришли .txt файл.')
 
 def main():
     if not TOKEN:
