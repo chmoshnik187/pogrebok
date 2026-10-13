@@ -22,6 +22,33 @@ function parseTxt(text) {
 }
 const api = (T, m, body) => fetch(`https://api.telegram.org/bot${T}/${m}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 const send = (T, chat, text) => api(T, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const MENU_CMDS = [
+  { command: 'start', description: 'знакомство с погребком' },
+  { command: 'help', description: 'что делает каждая команда' },
+  { command: 'my', description: 'ссылка на мою комнату сайта' },
+  { command: 'stats', description: 'сводка: полки, треки, имена' },
+  { command: 'list', description: 'полки и их треки постранично' },
+  { command: 'add', description: 'добавить трек: /add Артист - Трек' },
+  { command: 'del', description: 'удалить трек по номеру из 1-й полки' },
+  { command: 'find', description: 'где играет трек: Apple/Deezer/поиск' },
+  { command: 'locker', description: 'мой локер mp3' },
+  { command: 'play', description: 'слушать трек из локера' }
+];
+const HELP = `<b>ПОГРЕБОК · справочник команд</b>
+/my — ссылка на твою комнату сайта, собранную из твоих же полок.
+/stats — сводка профиля: сколько полок, треков и имён живёт у бота.
+/list — список полок с числом треков.
+/list ИМЯ или /list 1 — треклист полки по 60 треков; страницы: /list ИМЯ 2, /list ИМЯ 3…
+/add Артист - Трек [ссылка] — вручную вкатить трек в первую полку; обложка подтянется из Apple Music, ссылка — для полного прослушивания на сайте.
+/add! Артист - Трек — то же, но силой: даже если трек уже есть (дубли бывают искусством).
+/del N — удалить N-й трек первой полки (нумерация с 1, как в /list 1).
+/find Артист - Трек — проверка, где трек вообще играет: Apple Music, Deezer + ссылки на поиск в Яндексе, Spotify, YouTube, SoundCloud, Bandcamp.
+/locker — список твоих mp3, загруженных файлом.
+/play SLUG — слушать трек из локера (slug виден в /locker).
+/help — этот список, вдруг ты забыл, кто ты.
+Файлом .txt — загрузить или перезаписать полку (формат экспорта Яндекса: «1. Артист - Трек»).
+Файлом .mp3 — положить трек в локер, чтобы стримить его себе из облака.`;
 
 async function getProf(env, id) { return (await env.POGREB.get('prof:' + id, 'json')) || { files: [], urls: {}, art: {}, albums: {}, locker: {} }; }
 async function putProf(env, id, p) { await env.POGREB.put('prof:' + id, JSON.stringify(p)); await mergeCat(env, p, id); }
@@ -91,7 +118,22 @@ async function handleUpdate(env, T, u, ORIGIN) {
       if (e) { await api(T, 'sendAudio', { chat_id: chat, audio: e.fid }); return send(T, chat, `🎧 ${e.a} — ${e.t} · твой локер`); }
       return send(T, chat, 'Не нашёл в локере. Пришли mp3 файлом.');
     }
-    return send(T, chat, 'Я — погребок. Кидай .txt экспорт — соберу комнату.\nКидай mp3 — положу в локер и буду стримить тебе.\nКоманды: /my /stats /add /add! /del /find /locker /play');
+    if (!prof.menu) { prof.menu = 1; await putProf(env, chat, prof); api(T, 'setMyCommands', { commands: MENU_CMDS }).catch(() => {}); }
+    return send(T, chat, 'Я — погребок. Кидай .txt экспорт — соберу комнату.\nКидай mp3 — положу в локер и буду стримить тебе.\nКоманды: /my /stats /list /add /add! /del /find /locker /play\nСправочник по каждой: /help');
+  }
+  if (text.startsWith('/help')) return send(T, chat, HELP);
+  if (text.startsWith('/list')) {
+    if (!prof.files.length) return send(T, chat, 'Профиль пуст. Пришли .txt экспорт — и станет, что листать.');
+    const arg = text.slice(5).trim();
+    if (!arg) return send(T, chat, 'Твои полки:\n' + prof.files.map((f, i) => `· ${i + 1}. <b>${esc(f.name)}</b> — ${f.tracks.length} треков · посмотреть: /list ${i + 1}`).join('\n') + '\n\nТреклист полки: /list ИМЯ или номер. Страницы: /list ИМЯ 2');
+    const m = arg.match(/^(.+?)(?:\s+(\d+))?$/); const name = m[1]; let pn = Math.max(1, parseInt(m[2] || '1', 10) || 1);
+    let idx = /^\d+$/.test(name) ? parseInt(name, 10) - 1 : prof.files.findIndex(f => f.name.toLowerCase() === name.toLowerCase());
+    if (idx < 0) idx = prof.files.findIndex(f => f.name.toLowerCase().includes(name.toLowerCase()));
+    if (idx < 0 || idx >= prof.files.length) return send(T, chat, 'Не нашёл такую полку. Список полок: /list');
+    const f = prof.files[idx], PER = 60, pages = Math.max(1, Math.ceil(f.tracks.length / PER));
+    pn = Math.min(pn, pages);
+    const rows = f.tracks.slice((pn - 1) * PER, pn * PER).map(([a, t], i) => `${(pn - 1) * PER + i + 1}. ${esc(a)} — ${esc(t)}`).join('\n');
+    return send(T, chat, `<b>${esc(f.name)}</b> · стр. ${pn}/${pages} · всего ${f.tracks.length}\n${rows}\n${pn < pages ? `дальше: /list ${idx + 1} ${pn + 1}` : 'это всё было. добавляй ещё: /add Артист - Трек'}`);
   }
   if (text.startsWith('/my')) {
     const link = roomLink(env, chat, ORIGIN);
@@ -101,7 +143,7 @@ async function handleUpdate(env, T, u, ORIGIN) {
     if (!prof.files.length) return send(T, chat, 'Профиль пуст. Пришли .txt.');
     const n = prof.files.reduce((s, f) => s + f.tracks.length, 0);
     const arts = new Set(); prof.files.forEach(f => f.tracks.forEach(([a]) => a.split(/,|&/).forEach(p => p.trim() && arts.add(p.trim().toLowerCase()))));
-    return send(T, chat, `Плейлистов: ${prof.files.length} · треков: ${n} · имён: ${arts.size}\n` + prof.files.map(f => `· ${f.name}: ${f.tracks.length}`).join('\n'));
+    return send(T, chat, `Плейлистов: ${prof.files.length} · треков: ${n} · имён: ${arts.size}\n` + prof.files.map((f, i) => `· ${esc(f.name)}: ${f.tracks.length} · /list ${i + 1}`).join('\n'));
   }
   if (text.startsWith('/find')) {
     const m = text.slice(5).trim().match(/^(.+?)\s+-\s+(.+)$/); if (!m) return send(T, chat, 'Формат: /find Артист - Трек');
@@ -144,7 +186,7 @@ async function handleUpdate(env, T, u, ORIGIN) {
     await putProf(env, chat, prof);
     return send(T, chat, `Удалил: ${a} — ${t}`);
   }
-  return send(T, chat, 'Команды: /my /stats /add /del /find /locker /play или пришли .txt / mp3.');
+  return send(T, chat, 'Не понял команды. Полный справочник: /help · список полок: /list · или просто пришли .txt / mp3 файлом.');
 }
 async function digest(s) {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
