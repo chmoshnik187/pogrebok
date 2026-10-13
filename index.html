@@ -283,7 +283,7 @@ function dnav(){
     .map(([sl,a])=>`<a style="color:var(--mut);font-size:15px;font-weight:700" href="#/artist/${sl}" onclick="toggleDrawer()">♪ ${esc(a.name)}<small>${a.total}</small></a>`).join('');
   $('#dnav').innerHTML=`<div style="margin:2px 0 12px"><input id="q" placeholder="поиск: трек или артист…  ( / )" oninput="qSearch(this.value)" autocomplete="off" style="width:100%;background:#221537;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:9px;font-size:14px"><div id="qres" style="margin:8px 0 0;display:flex;flex-direction:column;gap:6px"></div></div>
   <div style="font-weight:900;font-size:22px;letter-spacing:-1px;background:linear-gradient(92deg,var(--pink),var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">ПОГРЕБОК</div>
-  <div class="dhead">${ACT==='cloud'?'☁️ ОБЛАКО БОТА (фоновый sync)':ACT==='remote'?'🌐 ПРОФИЛЬ ИЗ ОБЛАКА':ACT&&PROFS[ACT]?'👤 ПРОФИЛЬ: '+esc(PROFS[ACT].name):'🎭 ДЕМО-РЕЖИМ АВТОРА'}</div>
+  <div class="dhead">${ACT==='cloud'?'☁️ ОБЛАКО БОТА (фоновый sync)':ACT==='remote'?'🌐 ПРОФИЛЬ ИЗ ОБЛАКА':ACT&&PROFS[ACT]?'👤 ПРОФИЛЬ: '+esc(PROFS[ACT].name):CLOUD&&CLOUD_ERR?'☁️ ОБЛАКО НЕ ОТВЕЧАЕТ':CLOUD?'⏳ ГРУЗУ КОМНАТУ ИЗ ОБЛАКА…':DEMO.keys.length?'🎭 ДЕМО-РЕЖИМ АВТОРА':'📭 ПУСТОЙ ПОГРЕБ · СКЕЛЕТ'}</div>
   <div class="dhead">ПОЛКИ</div>${links}<div class="dhead">БЫСТРЫЙ ВХОД · АРТИСТЫ</div>${tops}
   <div class="dhead">КАБИНЕТ</div><a style="color:var(--cyan)" href="#/me" onclick="toggleDrawer()">📥 ТВОЙ АРХИВ<small>загрузить txt</small></a>`;
 }
@@ -354,6 +354,14 @@ function mosaic(entries){
     <img class="mbg" src="${coverFor(e.name+e.count,e.st)}" alt="">
     <div class="mov"><b>${esc(e.name)}</b><span>${e.count} треков у тебя</span></div></a>`;}).join('')+`</div>`;
 }
+function cloudBan(){
+  const err=!!CLOUD_ERR;
+  return `<section><div class="box" style="border-color:${err?'var(--pink)':'var(--cyan)'};padding:18px">
+  <p style="margin:0 0 8px;font-weight:800;color:${err?'var(--pink)':'var(--cyan)'}">${err?'☁️ Облако бота не отвечает':'☁️ Комната из облака бота'}</p>
+  <p class="note" style="margin:0 0 10px">${esc(err?CLOUD_ERR:'Секунду: тяну твои полки из облака бота…')}${err?' Пока связь не встала, ниже — пустая витрина скелета: чужих треков тут нет и не будет.':''}</p>
+  <p class="note" style="margin:0">адрес бота: <b>${esc(CLOUD.base)}</b> · id: <b>${esc(CLOUD.id)}</b></p>
+  <div class="chips" style="margin:10px 0 0"><span class="chip2" style="cursor:pointer;border-color:var(--cyan);color:var(--cyan)" onclick="cloudLoad()">🔁 повторить</span><span class="chip2" style="cursor:pointer" onclick="location.search=''">🚪 открыть без облака</span></div></div></section>`;
+}
 function onboarding(){
   return `<div class="hero"><span class="kick" style="color:var(--cyan)">погребок · скелет сайта · без чужих данных</span>
   <h1 style="background:linear-gradient(92deg,var(--pink),var(--violet) 45%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">ПОГРЕБОК</h1>
@@ -369,7 +377,7 @@ function onboarding(){
   <div class="box"><h3 style="margin:0 0 6px;font-size:15px;color:var(--cyan)">🧿 Артефакты</h3><p class="note" style="margin:0">Письмо себе, виниловая пластинка с твоими числами, год в числах с перекраской сайта.</p></div></div></section>`;
 }
 function hub(){
-  if(!D.keys.length)return onboarding();
+  if(!D.keys.length)return (CLOUD?cloudBan():'')+onboarding();
   const tops=Object.entries(D.artists).sort((a,b)=>b[1].total-a[1].total)
     .map(([sl,a])=>({name:a.name,count:a.total,slug:sl,st:a}));
   const cards=D.keys.map(k=>{const p=D.pl[k];
@@ -1120,9 +1128,12 @@ function saveProfs(){try{localStorage.setItem('pogreb_profs',JSON.stringify(PROF
 loadProfs();
 if(ACT&&PROFS[ACT]){try{D=buildProfile(PROFS[ACT].files,PROFS[ACT].urls);}catch(e){D=DEMO;ACT=null;}}
 const QSP=(typeof URLSearchParams!=='undefined')?new URLSearchParams(location.search):null;
-const CLOUD=(QSP&&QSP.get('bot')&&QSP.get('id'))?{base:QSP.get('bot').replace(/\/+$/,''),id:QSP.get('id')}:null;
+const CLOUD_ALIAS={'pogrebok_room_bot.workers.dev':'https://pogrebok.maximkomrakov.workers.dev'};
+let CLOUD_ERR='';
+const CLOUD=(()=>{if(!(QSP&&QSP.get('bot')&&QSP.get('id')))return null;let b=QSP.get('bot').replace(/\/+$/,'');try{const h=new URL(b).host;if(CLOUD_ALIAS[h])b=CLOUD_ALIAS[h];}catch(e){}return{base:b,id:QSP.get('id')};})();
 const REMOTE_U=QSP?QSP.get('u'):null;
-if(CLOUD&&typeof fetch!=='undefined'){fetch(CLOUD.base+'/api/profile?id='+encodeURIComponent(CLOUD.id)).then(r=>r.json()).then(j=>{if(j&&j.files&&j.files.length){D=buildProfile(j.files,j.urls||{},j);ACT='cloud';render();}}).catch(()=>{});}
+function cloudLoad(){if(!CLOUD||typeof fetch==='undefined')return;CLOUD_ERR='';fetch(CLOUD.base+'/api/profile?id='+encodeURIComponent(CLOUD.id)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(j=>{if(j&&j.files&&j.files.length){D=buildProfile(j.files,j.urls||{},j);ACT='cloud';CLOUD_ERR='';render();}else{CLOUD_ERR='Бот живой, но в профиле пусто: пришли боту .txt экспорт.';render();}}).catch(e=>{CLOUD_ERR='Не достучался до облака бота: '+CLOUD.base+' · '+(e&&e.message||e);render();});}
+cloudLoad();
 if(REMOTE_U&&typeof fetch!=='undefined'){fetch(decodeURIComponent(REMOTE_U)).then(r=>r.json()).then(j=>{if(j&&j.files&&j.files.length){D=buildProfile(j.files,j.urls||{},j);ACT='remote';render();}}).catch(()=>{});}
 function collections_top(tc){const c={};tc.forEach(t=>c[t]=(c[t]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,8);}
 const TAGS={'тьма':'смерт умр могил пепел мрак тьм тёмн темн кров труп демон дьявол кошмар страш страх боюсь тревог парано депресс тоск боль травм псих безум устал пустот одинок никто чужой бессон ненави вина ад'.split(' '),
