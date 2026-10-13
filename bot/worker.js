@@ -57,7 +57,8 @@ async function deezer(q) {
   try { return await (await fetch('https://api.deezer.com/search?q=' + encodeURIComponent(q) + '&limit=5')).json(); } catch (e) { return { total: 0 }; }
 }
 
-async function handleUpdate(env, T, u) {
+const roomLink = (env, chat, origin) => env.SITE ? `${env.SITE}/?bot=${encodeURIComponent(origin || '')}&id=${chat}` : '';
+async function handleUpdate(env, T, u, ORIGIN) {
   const msg = u.message; if (!msg) return;
   const chat = msg.chat.id;
   const prof = await getProf(env, chat);
@@ -72,7 +73,7 @@ async function handleUpdate(env, T, u) {
     prof.files = prof.files.filter(f => f.name !== name); prof.files.push({ name, tracks });
     await putProf(env, chat, prof);
     const n = prof.files.reduce((s, f) => s + f.tracks.length, 0);
-    const link = env.SITE ? `${env.SITE}/?bot=${encodeURIComponent('https://' + BOT + '.workers.dev')}&id=${chat}` : '';
+    const link = roomLink(env, chat, ORIGIN);
     return send(T, chat, `Принял: <b>${name}</b> · ${tracks.length} треков.\nВ профиле: ${n} треков.\n${link ? 'Твоя комната: ' + link : ''}`);
   }
   if (msg.audio && !msg.text) {
@@ -93,7 +94,7 @@ async function handleUpdate(env, T, u) {
     return send(T, chat, 'Я — погребок. Кидай .txt экспорт — соберу комнату.\nКидай mp3 — положу в локер и буду стримить тебе.\nКоманды: /my /stats /add /add! /del /find /locker /play');
   }
   if (text.startsWith('/my')) {
-    const link = env.SITE ? `${env.SITE}/?bot=${encodeURIComponent('https://' + BOT + '.workers.dev')}&id=${chat}` : '';
+    const link = roomLink(env, chat, ORIGIN);
     return send(T, chat, link || 'Профиль есть, но SITE не задан в переменных воркера.');
   }
   if (text.startsWith('/stats')) {
@@ -156,7 +157,7 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: ENC });
     if (u.pathname === '/tg' && req.method === 'POST') {
       const up = await req.json();
-      try { await handleUpdate(env, T, up); } catch (e) { console.log('upd err', e); }
+      try { await handleUpdate(env, T, up, u.origin); } catch (e) { console.log('upd err', e); }
       return j({ ok: true });
     }
     const id = u.searchParams.get('id') || '';
