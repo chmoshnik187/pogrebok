@@ -188,6 +188,11 @@ async function handleUpdate(env, T, u, ORIGIN) {
   }
   return send(T, chat, 'Не понял команды. Полный справочник: /help · список полок: /list · или просто пришли .txt / mp3 файлом.');
 }
+function voteSum(v, uid) {
+  const c = {}; let n = 0;
+  for (const col of Object.values(v.u || {})) { c[col] = (c[col] || 0) + 1; n++; }
+  return { ok: true, counts: c, total: n, mine: (v.u || {})[uid] || null };
+}
 async function digest(s) {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -233,6 +238,24 @@ export default {
       if (!e) return j({ error: 'not in catalog' }, 404);
       e.comments = (e.comments || []).concat([{ id: b.id || '?', name: (b.name || 'аноним из погреба').slice(0, 40), text: (b.text || '').slice(0, 500), ts: Math.floor(Date.now() / 1000) }]).slice(-50);
       await env.POGREB.put('catalog', JSON.stringify(c)); return j({ ok: true, n: e.comments.length });
+    }
+    /* голоса «окрасов»: реальная статистика погреба, один голос на uid, хранится в KV ключом votes:<track> */
+    if (u.pathname === '/api/votes' && req.method === 'GET') {
+      const tk = (u.searchParams.get('tk') || '').toLowerCase();
+      if (!tk) return j({ error: 'tk?' }, 400);
+      const v = (await env.POGREB.get('votes:' + tk, 'json')) || { u: {} };
+      return j(voteSum(v, u.searchParams.get('uid') || ''));
+    }
+    if (u.pathname === '/api/vote' && req.method === 'POST') {
+      const b = await req.json();
+      const tk = (b.tk || '').toLowerCase().slice(0, 400);
+      const uid = String(b.uid || '').slice(0, 64);
+      const color = String(b.color || '').slice(0, 40);
+      if (!tk || !uid || !color) return j({ error: 'tk, uid, color required' }, 400);
+      const v = (await env.POGREB.get('votes:' + tk, 'json')) || { u: {} };
+      v.u = v.u || {}; v.u[uid] = color;
+      await env.POGREB.put('votes:' + tk, JSON.stringify(v));
+      return j(voteSum(v, uid));
     }
     if (u.pathname === '/') return Response.redirect(env.SITE || 'https://github.com/chmoshnik187/pogrebok', 302);
     return j({ error: 'not found' }, 404);
